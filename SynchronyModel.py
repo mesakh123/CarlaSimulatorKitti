@@ -152,7 +152,13 @@ class SynchronyModel:
         trans_cfg = self.cfg["AGENT_CONFIG"]["TRANSFORM"]
         transform = config_to_trans(trans_cfg)
         transform = random.choice(self.world.get_map().get_spawn_points())
-        agent = self.world.spawn_actor(vehicle_bp, transform)
+        success = False
+        while not success:
+            try:
+                agent = self.world.spawn_actor(vehicle_bp, transform)
+                success = True
+            except:
+                pass
         agent.set_autopilot(True, self.traffic_manager.get_port())
         
         self.player = agent
