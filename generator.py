@@ -34,6 +34,7 @@ save = False
 
 
 def save_data(model,dtsave):
+    global save
     while True:
         if save:        
             data = model.tick()
