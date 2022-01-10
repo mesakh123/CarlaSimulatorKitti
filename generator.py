@@ -58,7 +58,7 @@ def main(args):
         destination = random.choice(spawn_points).location
         agent.set_destination(destination)
         
-        world = World(model.world,hud,args)
+        world = World(model.client.get_world(),hud,args)
         clock = pygame.time.Clock()
         
         while True:
@@ -70,6 +70,7 @@ def main(args):
             else:
                 clock.tick()
                 model.world.tick()
+                world.world.tick()
                 if controller.parse_events():
                     return
                 world.tick(clock)
