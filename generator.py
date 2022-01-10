@@ -40,12 +40,8 @@ def save_data(model,dtsave):
             data = model.tick()
             data = objects_filter(data)
             dtsave.save_training_files(data)
-        sleep(1)
-            
+            save = False
     
-
-
-
 
 def main(args):
     global save
@@ -92,9 +88,7 @@ def main(args):
         agent.set_destination(destination)
         
         clock = pygame.time.Clock()
-        thread = threading.Thread(target=save_data,args=(model,dtsave,))
-        thread.start()
-        
+
         while True:
             clock.tick()
             model.world.tick()
@@ -115,6 +109,8 @@ def main(args):
 
             if step % STEP ==0:
                 save = True
+                t = threading.Thread(target=save_data,args=(model,dtsave,))
+                t.start()
                 print(step / STEP)
             save = False   
             control = agent.run_step()
