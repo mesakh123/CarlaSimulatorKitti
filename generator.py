@@ -169,9 +169,9 @@ if __name__ == '__main__':
 
 
     log_level = logging.DEBUG if args.debug else logging.INFO
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
+    #logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
 
-    logging.info('listening to server %s:%s', args.host, args.port)
+    #logging.info('listening to server %s:%s', args.host, args.port)
 
 
     main(args)

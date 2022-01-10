@@ -69,7 +69,7 @@ class SynchronyModel:
             num_of_vehicles = num_of_vehicles
         elif num_of_vehicles > number_of_spawn_points:
             msg = 'requested %d vehicles, but could only find %d spawn points'
-            logging.warning(msg, num_of_vehicles, number_of_spawn_points)
+            #logging.warning(msg, num_of_vehicles, number_of_spawn_points)
             num_of_vehicles = number_of_spawn_points
 
         batch = []

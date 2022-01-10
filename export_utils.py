@@ -16,11 +16,11 @@ def save_ref_files(OUTPUT_FOLDER, id):
         path = os.path.join(OUTPUT_FOLDER, name)
         with open(path, 'a') as f:
             f.write("{0:06}".format(id) + '\n')
-        logging.info("Wrote reference files to %s", path)
+        #logging.info("Wrote reference files to %s", path)
 
 
 def save_image_data(filename, image):
-    logging.info("Wrote image data to %s", filename)
+    #logging.info("Wrote image data to %s", filename)
     image.save_to_disk(filename)
 
 def save_bbox_image_data(filename, image):
@@ -48,7 +48,7 @@ def save_lidar_data(filename, point_cloud, format="bin"):
             KITTI: X  -Y   Z
         NOTE: We do not flip the coordinate system when saving to .ply.
     """
-    logging.info("Wrote lidar data to %s", filename)
+    #logging.info("Wrote lidar data to %s", filename)
 
     if format == "bin":
         point_cloud = np.copy(np.frombuffer(point_cloud.raw_data, dtype=np.dtype('f4')))
@@ -58,20 +58,19 @@ def save_lidar_data(filename, point_cloud, format="bin"):
         lidar_array = [[point[0], -point[1], point[2], 1.0]
                        for point in point_cloud]
         lidar_array = np.array(lidar_array).astype(np.float32)
-        logging.debug("Lidar min/max of x: {} {}".format(
-                      lidar_array[:, 0].min(), lidar_array[:, 0].max()))
-        logging.debug("Lidar min/max of y: {} {}".format(
-                      lidar_array[:, 1].min(), lidar_array[:, 0].max()))
-        logging.debug("Lidar min/max of z: {} {}".format(
-                      lidar_array[:, 2].min(), lidar_array[:, 0].max()))
+        #logging.debug("Lidar min/max of x: {} {}".format(
+        #              lidar_array[:, 0].min(), lidar_array[:, 0].max()))
+        #logging.debug("Lidar min/max of y: {} {}".format(
+        #             lidar_array[:, 1].min(), lidar_array[:, 0].max()))
+        #logging.debug("Lidar min/max of z: {} {}".format(
+        #              lidar_array[:, 2].min(), lidar_array[:, 0].max()))
         lidar_array.tofile(filename)
-
 
 def save_label_data(filename, datapoints):
     with open(filename, 'w') as f:
         out_str = "\n".join([str(point) for point in datapoints if point])
         f.write(out_str)
-    logging.info("Wrote kitti data to %s", filename)
+    #logging.info("Wrote kitti data to %s", filename)
 
 
 def save_calibration_matrices(transform, filename, intrinsic_mat):
@@ -134,7 +133,7 @@ def save_calibration_matrices(transform, filename, intrinsic_mat):
         write_flat(f, "R0_rect", R0)
         write_flat(f, "Tr_velo_to_cam", TR_velodyne)
         write_flat(f, "TR_imu_to_velo", TR_imu_to_velo)
-    logging.info("Wrote all calibration matrices to %s", filename)
+    #logging.info("Wrote all calibration matrices to %s", filename)
 
 def save_rgb_image(filename, image):
     im = Image.fromarray(image)
