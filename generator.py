@@ -47,6 +47,7 @@ def save_data(model,dtsave):
 
 
 def main(args):
+    global save
     cfg = cfg_from_yaml_file("configs.yaml")
     model = SynchronyModel(cfg)
     dtsave = DataSave(cfg)
@@ -112,8 +113,9 @@ def main(args):
                     break
 
             if step % STEP ==0:
-                
+                save = True
                 print(step / STEP)
+            save = False   
             control = agent.run_step()
             control.manual_gear_shift = False
             world.player.apply_control(control)
