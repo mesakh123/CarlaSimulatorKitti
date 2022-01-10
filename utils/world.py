@@ -19,7 +19,7 @@ from .global_functions import *
 class World(object):
     """ Class representing the surrounding environment """
 
-    def __init__(self, carla_world, hud, args):
+    def __init__(self, carla_world, hud, args,remote_player: None):
         """Constructor method"""
         self._args = args
         self.world = carla_world
@@ -39,12 +39,12 @@ class World(object):
         self._weather_presets = find_weather_presets()
         self._weather_index = 0
         self._actor_filter = args.filter
-        self.restart(args)
+        self.restart(args,remote_player)
         self.world.on_tick(hud.on_world_tick)
         self.recording_enabled = False
         self.recording_start = 0
 
-    def restart(self, args):
+    def restart(self, args, remote_player: None):
         """Restart the world"""
         # Keep same camera config if the camera manager exists.
         cam_index = self.camera_manager.index if self.camera_manager is not None else 0
@@ -71,8 +71,8 @@ class World(object):
                 print('There are no spawn points available in your map/town.')
                 print('Please add some Vehicle Spawn Point to your UE4 scene.')
                 sys.exit(1)
-            if self.world.player is not None:
-                self.player = self.world.player
+            if remote_player is not None:
+                self.player = remote_player
             else:
                 spawn_points = self.map.get_spawn_points()
                 spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
