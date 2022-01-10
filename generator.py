@@ -26,6 +26,26 @@ from utils.world import World
 import random
 
 
+import threading
+from time import sleep
+
+
+save = False
+
+
+def save_data(model,dtsave):
+    while True:
+        if save:        
+            data = model.tick()
+            data = objects_filter(data)
+            dtsave.save_training_files(data)
+        sleep(1)
+            
+    
+
+
+
+
 def main(args):
     cfg = cfg_from_yaml_file("configs.yaml")
     model = SynchronyModel(cfg)
@@ -70,6 +90,8 @@ def main(args):
         agent.set_destination(destination)
         
         clock = pygame.time.Clock()
+        thread = threading.Thread(target=save_data,args=(model,dtsave,))
+        thread.start()
         
         while True:
             clock.tick()
@@ -90,9 +112,7 @@ def main(args):
                     break
 
             if step % STEP ==0:
-                data = model.tick()
-                data = objects_filter(data)
-                dtsave.save_training_files(data)
+                
                 print(step / STEP)
             control = agent.run_step()
             control.manual_gear_shift = False
