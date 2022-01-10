@@ -72,32 +72,31 @@ def main(args):
         clock = pygame.time.Clock()
         
         while True:
+            clock.tick()
+            model.world.tick()
+            world.world.tick()
+            if controller.parse_events():
+                return
+            world.tick(clock)
+            world.render(display)
+            pygame.display.flip()
+            if agent.done():
+                if args.loop:
+                    agent.set_destination(random.choice(spawn_points).location)
+                    world.hud.notification("The target has been reached, searching for another target", seconds=4.0)
+                    print("The target has been reached, searching for another target")
+                else:
+                    print("The target has been reached, stopping the simulation")
+                    break
+
             if step % STEP ==0:
                 data = model.tick()
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
                 print(step / STEP)
-            else:
-                clock.tick()
-                model.world.tick()
-                world.world.tick()
-                if controller.parse_events():
-                    return
-                world.tick(clock)
-                world.render(display)
-                pygame.display.flip()
-                if agent.done():
-                    if args.loop:
-                        agent.set_destination(random.choice(spawn_points).location)
-                        world.hud.notification("The target has been reached, searching for another target", seconds=4.0)
-                        print("The target has been reached, searching for another target")
-                    else:
-                        print("The target has been reached, stopping the simulation")
-                        break
-
-                control = agent.run_step()
-                control.manual_gear_shift = False
-                world.player.apply_control(control)
+            control = agent.run_step()
+            control.manual_gear_shift = False
+            world.player.apply_control(control)
             step+=1
     finally:
         model.setting_recover()
