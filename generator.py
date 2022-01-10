@@ -5,8 +5,15 @@ from data_utils import objects_filter
 
 import logging
 import pygame
-
-
+import os
+import sys
+import argparse
+print("Import ",os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/CarlaSimulatorKitti/carla')
+try:
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/CarlaSimulatorKitti/carla')
+except IndexError:
+    raise RuntimeError(
+        'cannot import carla, make sure numpy package is installed')
 import carla
 from carla import ColorConverter as cc
 
@@ -28,6 +35,8 @@ def main(args):
     pygame.init()
     pygame.font.init()
     world = None
+    args.sync = True
+    args.behaviour = "Basic"
 
     try:
         model.set_synchrony()
@@ -48,7 +57,8 @@ def main(args):
         )
         
         hud = HUD(image_width, image_height)
-        controller = KeyboardControl(model.world)
+        world = World(model.world,hud,args)
+        controller = KeyboardControl(world)
         if args.agent == "Basic":
             agent = BasicAgent(model.world.player)
         else:
@@ -58,7 +68,6 @@ def main(args):
         destination = random.choice(spawn_points).location
         agent.set_destination(destination)
         
-        world = World(model.client.get_world(),hud,args)
         clock = pygame.time.Clock()
         
         while True:

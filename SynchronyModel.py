@@ -7,17 +7,22 @@ import numpy as np
 
 from config import config_to_trans
 from data_utils import camera_intrinsic, filter_by_distance
-
+import sys
+import os
 sys.path.append("/opt/carla-simulator/PythonAPI/carla/dist/carla-0.9.12-py3.7-linux-x86_64.egg")
-
+try:
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/CarlaSimulatorKitti/carla')
+except IndexError:
+    raise RuntimeError(
+        'cannot import carla, make sure numpy package is installed')
 import carla
 
 
 class SynchronyModel:
     def __init__(self, cfg):
         self.cfg = cfg
-        self.client = carla.Client('localhost', 2000)
-        self.client.set_timeout(5.0)
+        self.client = carla.Client('127.0.0.1', 2000)
+        self.client.set_timeout(4.0)
         self.world = self.client.get_world()
         self.traffic_manager = self.client.get_trafficmanager()
         self.init_settings = None
