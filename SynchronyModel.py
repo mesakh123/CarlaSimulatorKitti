@@ -155,6 +155,10 @@ class SynchronyModel:
         success = False
         while not success:
             try:
+                vehicle_bp = random.choice(self.world.get_blueprint_library().filter(self.cfg["AGENT_CONFIG"]["BLUEPRINT"]))
+                trans_cfg = self.cfg["AGENT_CONFIG"]["TRANSFORM"]
+                transform = config_to_trans(trans_cfg)
+                transform = random.choice(self.world.get_map().get_spawn_points())
                 agent = self.world.spawn_actor(vehicle_bp, transform)
                 success = True
             except:
