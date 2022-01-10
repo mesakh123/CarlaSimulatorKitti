@@ -7,6 +7,7 @@
 
 import carla
 from carla import ColorConverter as cc
+import sys
 from .collision_sensor import CollisionSensor
 from .lane_sensor import LaneInvasionSensor
 from .gns_sensor import GnssSensor

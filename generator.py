@@ -65,7 +65,7 @@ def main(args):
         else:
             agent = BehaviorAgent(world.player, behavior=args.behavior)
         # Set the agent destination
-        spawn_points = model.world.get_map().get_spawn_points()
+        spawn_points = world.map.get_spawn_points()
         destination = random.choice(spawn_points).location
         agent.set_destination(destination)
         
@@ -106,6 +106,7 @@ def main(args):
             settings.synchronous_mode = False
             settings.fixed_delta_seconds = None
             world.world.apply_settings(settings)
+            world.destroy()
         pygame.quit()
 
 
