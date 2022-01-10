@@ -75,7 +75,7 @@ def main(args):
         )
         
         hud = HUD(image_width, image_height)
-        world = World(model.world,hud,args, model.player)
+        world = World(model.world,hud,args)
         
         controller = KeyboardControl(world)
         if args.agent == "Basic":

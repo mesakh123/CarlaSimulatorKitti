@@ -19,7 +19,7 @@ from .global_functions import *
 class World(object):
     """ Class representing the surrounding environment """
 
-    def __init__(self, carla_world, hud, args, player):
+    def __init__(self, carla_world, hud, args):
         """Constructor method"""
         self._args = args
         self.world = carla_world
@@ -31,7 +31,7 @@ class World(object):
             print('  Make sure it exists, has the same name of your town, and is correct.')
             sys.exit(1)
         self.hud = hud
-        self.player = player
+        self.player = None
         self.collision_sensor = None
         self.lane_invasion_sensor = None
         self.gnss_sensor = None
@@ -71,9 +71,12 @@ class World(object):
                 print('There are no spawn points available in your map/town.')
                 print('Please add some Vehicle Spawn Point to your UE4 scene.')
                 sys.exit(1)
-            spawn_points = self.map.get_spawn_points()
-            spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
-            self.player = self.world.try_spawn_actor(blueprint, spawn_point)
+            if self.world.player is not None:
+                self.player = self.world.player
+            else:
+                spawn_points = self.map.get_spawn_points()
+                spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+                self.player = self.world.try_spawn_actor(blueprint, spawn_point)
             self.modify_vehicle_physics(self.player)
 
         if self._args.sync:
