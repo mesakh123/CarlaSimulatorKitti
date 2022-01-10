@@ -24,7 +24,9 @@ class SynchronyModel:
         self.frame = None
         self.actors = {"non_agents": [], "walkers": [], "agents": [], "sensors": {}}
         self.data = {"sensor_data": {}, "environment_data": None}  # 记录每一帧的数据
-        self.vehicle = None
+        self.player = None
+        self.image_width = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"]
+        self.image_height = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"]
 
     def set_synchrony(self):
         self.init_settings = self.world.get_settings()
@@ -146,6 +148,7 @@ class SynchronyModel:
         transform = random.choice(self.world.get_map().get_spawn_points())
         agent = self.world.spawn_actor(vehicle_bp, transform)
         agent.set_autopilot(True, self.traffic_manager.get_port())
+        self.player = agent
         self.actors["agents"].append(agent)
 
         self.actors["sensors"][agent] = []
