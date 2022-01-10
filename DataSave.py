@@ -44,11 +44,11 @@ class DataSave:
             "There already exists a dataset in {}. Would you like to (O)verwrite or (A)ppend the dataset? (O/A)".format(
                 self.OUTPUT_FOLDER))
         if answer.upper() == "O":
-            logging.info(
-                "Resetting frame number to 0 and overwriting existing")
+            #logging.info(
+            #    "Resetting frame number to 0 and overwriting existing")
             return 0
-        logging.info("Continuing recording data on frame number {}".format(
-            num_existing_data_files))
+        #logging.info("Continuing recording data on frame number {}".format(
+        #    num_existing_data_files))
         return num_existing_data_files
 
     def save_training_files(self, data):
