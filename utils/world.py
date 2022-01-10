@@ -31,7 +31,7 @@ class World(object):
             print('  Make sure it exists, has the same name of your town, and is correct.')
             sys.exit(1)
         self.hud = hud
-        self.player = None
+        self.player = player
         self.collision_sensor = None
         self.lane_invasion_sensor = None
         self.gnss_sensor = None
