@@ -58,11 +58,12 @@ def main(args):
         
         hud = HUD(image_width, image_height)
         world = World(model.world,hud,args)
+        world.player = model.player
         controller = KeyboardControl(world)
         if args.agent == "Basic":
-            agent = BasicAgent(model.world.player)
+            agent = BasicAgent(world.player)
         else:
-            agent = BehaviorAgent(model.world.player, behavior=args.behavior)
+            agent = BehaviorAgent(world.player, behavior=args.behavior)
         # Set the agent destination
         spawn_points = model.world.get_map().get_spawn_points()
         destination = random.choice(spawn_points).location
