@@ -19,7 +19,7 @@ from .global_functions import *
 class World(object):
     """ Class representing the surrounding environment """
 
-    def __init__(self, carla_world, hud, args):
+    def __init__(self, carla_world, hud, args, player):
         """Constructor method"""
         self._args = args
         self.world = carla_world
