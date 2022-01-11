@@ -56,7 +56,7 @@ def main(args):
     world = None
     args.sync = True
     args.behaviour = "Basic"
-
+    tasks = []
     try:
         model.set_synchrony()
         model.spawn_actors()
@@ -112,7 +112,7 @@ def main(args):
                 save = True
                 t = threading.Thread(target=save_data,args=(model,dtsave,))
                 t.start()
-                t.join()
+                tasks.append(t)
                 
                 print(step / STEP)
             save = False   
@@ -128,6 +128,10 @@ def main(args):
             settings.fixed_delta_seconds = None
             world.world.apply_settings(settings)
             world.destroy()
+            if tasks:
+                for t in tasks:
+                    t.join()
+                
         pygame.quit()
 
 
