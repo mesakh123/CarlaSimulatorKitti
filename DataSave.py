@@ -18,7 +18,7 @@ class DataSave:
         """ 生成数据存储的路径"""
         PHASE = "training"
         self.OUTPUT_FOLDER = os.path.join(root_path, PHASE)
-        folders = ['calib', 'data', 'kitti_label', 'carla_label', 'velodyne']
+        folders = ['calib', 'data', 'labels', 'carla_label', 'velodyne']
 
         for folder in folders:
             directory = os.path.join(self.OUTPUT_FOLDER, folder)
@@ -26,7 +26,7 @@ class DataSave:
                 os.makedirs(directory)
 
         self.LIDAR_PATH = os.path.join(self.OUTPUT_FOLDER, 'velodyne/{0:06}.bin')
-        self.KITTI_LABEL_PATH = os.path.join(self.OUTPUT_FOLDER, 'kitti_label/{0:06}.txt')
+        self.KITTI_LABEL_PATH = os.path.join(self.OUTPUT_FOLDER, 'labels/{0:06}.txt')
         self.CARLA_LABEL_PATH = os.path.join(self.OUTPUT_FOLDER, 'carla_label/{0:06}.txt')
         self.IMAGE_PATH = os.path.join(self.OUTPUT_FOLDER, 'data/{0:06}.png')
         self.CALIBRATION_PATH = os.path.join(self.OUTPUT_FOLDER, 'calib/{0:06}.txt')
@@ -34,7 +34,7 @@ class DataSave:
 
     def _current_captured_frame_num(self):
         """获取文件夹中存在的数据量"""
-        label_path = os.path.join(self.OUTPUT_FOLDER, 'kitti_label/')
+        label_path = os.path.join(self.OUTPUT_FOLDER, 'labels/')
         num_existing_data_files = len(
             [name for name in os.listdir(label_path) if name.endswith('.txt')])
         print("Currently there are {} data exist.".format(num_existing_data_files))
