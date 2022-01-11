@@ -111,6 +111,7 @@ def main(args):
             if step % STEP ==0:
                 save = True
                 t = threading.Thread(target=save_data,args=(model,dtsave,))
+                t.daemon = True
                 t.start()
                 tasks.append(t)
                 
