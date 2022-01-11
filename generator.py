@@ -31,21 +31,23 @@ from time import sleep
 
 
 save = False
+model = None
+dtsave = None
 
 
-def save_data(model,dtsave):
-    global save
+def save_data():
+    global save,model,dtsave
     while True:
         if save:        
             data = model.tick()
             data = objects_filter(data)
             dtsave.save_training_files(data)
             save = False
-            sleep(1)
+            #sleep(1)
     
 
 def main(args):
-    global save
+    global save, model,dtsave
     cfg = cfg_from_yaml_file("configs.yaml")
     model = SynchronyModel(cfg)
     dtsave = DataSave(cfg)
@@ -90,6 +92,9 @@ def main(args):
         
         clock = pygame.time.Clock()
 
+        t = threading.Thread(target=save_data,args=())
+        t.daemon = True
+        t.start()
         while True:
             clock.tick()
             model.world.tick()
@@ -110,10 +115,6 @@ def main(args):
 
             if step % STEP ==0:
                 save = True
-                t = threading.Thread(target=save_data,args=(model,dtsave,))
-                t.start()
-                tasks.append(t)
-                
                 print(step / STEP)
             save = False   
             control = agent.run_step()
