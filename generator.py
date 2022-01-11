@@ -38,11 +38,12 @@ dtsave = None
 def save_data():
     global save,model,dtsave
     while True:
-        if save:        
-            data = model.tick()
-            data = objects_filter(data)
-            dtsave.save_training_files(data)
-            save = False
+        if save:
+            with threading.Lock():
+                data = model.tick()
+                data = objects_filter(data)
+                dtsave.save_training_files(data)
+                save = False
             #sleep(1)
     
 
@@ -116,7 +117,6 @@ def main(args):
             if step % STEP ==0:
                 save = True
                 print(step / STEP)
-            save = False   
             control = agent.run_step()
             control.manual_gear_shift = False
             world.player.apply_control(control)
