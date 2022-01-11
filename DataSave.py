@@ -37,7 +37,7 @@ class DataSave:
         label_path = os.path.join(self.OUTPUT_FOLDER, 'kitti_label/')
         num_existing_data_files = len(
             [name for name in os.listdir(label_path) if name.endswith('.txt')])
-        print("当前存在{}个数据".format(num_existing_data_files))
+        print("Currently there are {} data exist.".format(num_existing_data_files))
         if num_existing_data_files == 0:
             return 0
         answer = input(
