@@ -41,6 +41,7 @@ def save_data(model,dtsave):
             data = objects_filter(data)
             dtsave.save_training_files(data)
             save = False
+            sleep(1)
     
 
 def main(args):
@@ -111,6 +112,8 @@ def main(args):
                 save = True
                 t = threading.Thread(target=save_data,args=(model,dtsave,))
                 t.start()
+                t.join()
+                
                 print(step / STEP)
             save = False   
             control = agent.run_step()
