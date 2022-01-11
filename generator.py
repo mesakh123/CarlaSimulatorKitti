@@ -113,6 +113,7 @@ def main(args):
                 t = threading.Thread(target=save_data,args=(model,dtsave,))
                 t.daemon = True
                 t.start()
+                t.join()
                 tasks.append(t)
                 
                 print(step / STEP)
