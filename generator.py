@@ -53,6 +53,7 @@ def save_data():
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
                 save = False
+                print("saved", "")
             sleep(1)
 
 
@@ -105,7 +106,7 @@ def main(args):
         t.start()
         while True:
             clock.tick()
-            model.world.tick()
+            # model.world.tick()
             world.world.tick()
             if controller.parse_events():
                 return
@@ -125,8 +126,9 @@ def main(args):
                     break
 
             if step % STEP == 0:
-                print(step / STEP)
+                print(step / STEP, " ", end="")
                 save = True
+                print("")
             control = agent.run_step()
             control.manual_gear_shift = False
             world.player.apply_control(control)
