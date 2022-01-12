@@ -24,8 +24,9 @@ def save_ref_files(OUTPUT_FOLDER, id):
         path = os.path.join(OUTPUT_FOLDER, name)
         # with open(path, 'a') as f:
         #    f.write("{0:06}".format(id) + '\n')
-        with os.open(path, os.O_CREAT | os.O_APPEND | os.O_NONBLOCK) as f:
-            os.write(f, "{0:06}".format(id) + "\n")
+        f = os.open(path, os.O_CREAT | os.O_APPEND | os.O_NONBLOCK)
+        os.write(f, "{0:06}".format(id) + "\n")
+        os.close(f)
 
         # logging.info("Wrote reference files to %s", path)
 
@@ -37,7 +38,9 @@ def save_image_data(filename, image):
 
 def save_bbox_image_data(filename, image):
     im = Image.fromarray(image)
-    save_img_async(filename, image)
+    buffer = io.BytesIO()
+    im.save(buffer, format="png")
+    save_img_async(filename, buffer.getbuffer())
     # im.save(filename)
 
 
@@ -82,9 +85,10 @@ def save_lidar_data(filename, point_cloud, format="bin"):
 
 def save_label_data(filename, datapoints):
 
-    with os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK) as f:
-        out_str = "\n".join([str(point) for point in datapoints if point])
-        os.write(f, out_str)
+    f = os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK)
+    out_str = "\n".join([str(point) for point in datapoints if point])
+    os.write(f, out_str)
+    os.close(f)
     # logging.info("Wrote kitti data to %s", filename)
 
 
@@ -156,18 +160,21 @@ def save_calibration_matrices(transform, filename, intrinsic_mat):
         )
 
     # All matrices are written on a line with spacing
-    with os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK) as f:
-        for i in range(
-            4
-        ):  # Avod expects all 4 P-matrices even though we only use the first
-            write_flat(f, "P" + str(i), P0)
-        write_flat(f, "R0_rect", R0)
-        write_flat(f, "Tr_velo_to_cam", TR_velodyne)
-        write_flat(f, "TR_imu_to_velo", TR_imu_to_velo)
+    f = os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK)
+    for i in range(
+        4
+    ):  # Avod expects all 4 P-matrices even though we only use the first
+        write_flat(f, "P" + str(i), P0)
+    write_flat(f, "R0_rect", R0)
+    write_flat(f, "Tr_velo_to_cam", TR_velodyne)
+    write_flat(f, "TR_imu_to_velo", TR_imu_to_velo)
+    os.close(f)
     # logging.info("Wrote all calibration matrices to %s", filename)
 
 
 def save_rgb_image(filename, image):
     im = Image.fromarray(image)
-    save_img_async(filename, image)
+    buffer = io.BytesIO()
+    im.save(buffer, format="png")
+    save_img_async(filename, buffer.getbuffer())
     # im.save(filename)
