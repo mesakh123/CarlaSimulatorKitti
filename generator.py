@@ -8,16 +8,25 @@ import pygame
 import os
 import sys
 import argparse
-print("Import ",os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/CarlaSimulatorKitti/carla')
+
+print(
+    "Import ",
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    + "/CarlaSimulatorKitti/carla",
+)
 try:
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/CarlaSimulatorKitti/carla')
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        + "/CarlaSimulatorKitti/carla"
+    )
 except IndexError:
-    raise RuntimeError(
-        'cannot import carla, make sure numpy package is installed')
+    raise RuntimeError("cannot import carla, make sure numpy package is installed")
 import carla
 from carla import ColorConverter as cc
 
-from agents.navigation.behavior_agent import BehaviorAgent  # pylint: disable=import-error
+from agents.navigation.behavior_agent import (
+    BehaviorAgent,
+)  # pylint: disable=import-error
 from agents.navigation.basic_agent import BasicAgent  # pylint: disable=import-error
 
 from utils.hud import HUD
@@ -36,7 +45,7 @@ dtsave = None
 
 
 def save_data():
-    global save,model,dtsave
+    global save, model, dtsave
     while True:
         if save:
             with threading.Lock():
@@ -44,16 +53,18 @@ def save_data():
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
                 save = False
-            #sleep(1)
-    
+            sleep(1)
+            print("saved")
+        else:
+            print()
+
 
 def main(args):
-    global save, model,dtsave
+    global save, model, dtsave
     cfg = cfg_from_yaml_file("configs.yaml")
     model = SynchronyModel(cfg)
     dtsave = DataSave(cfg)
-    
-    
+
     pygame.init()
     pygame.font.init()
     world = None
@@ -70,17 +81,16 @@ def main(args):
         STEP = cfg["SAVE_CONFIG"]["STEP"]
         image_width = cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"]
         image_height = cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"]
-        
+
         args.width, args.height = image_width, image_height
-        
+
         display = pygame.display.set_mode(
-            (image_width,image_height),
-            pygame.HWSURFACE | pygame.DOUBLEBUF
+            (image_width, image_height), pygame.HWSURFACE | pygame.DOUBLEBUF
         )
-        
+
         hud = HUD(image_width, image_height)
-        world = World(model.world,hud,args,model.player)
-        
+        world = World(model.world, hud, args, model.player)
+
         controller = KeyboardControl(world)
         if args.agent == "Basic":
             agent = BasicAgent(world.player)
@@ -90,10 +100,10 @@ def main(args):
         spawn_points = world.map.get_spawn_points()
         destination = random.choice(spawn_points).location
         agent.set_destination(destination)
-        
+
         clock = pygame.time.Clock()
 
-        t = threading.Thread(target=save_data,args=())
+        t = threading.Thread(target=save_data, args=())
         t.daemon = True
         t.start()
         while True:
@@ -108,19 +118,22 @@ def main(args):
             if agent.done():
                 if args.loop:
                     agent.set_destination(random.choice(spawn_points).location)
-                    world.hud.notification("The target has been reached, searching for another target", seconds=4.0)
+                    world.hud.notification(
+                        "The target has been reached, searching for another target",
+                        seconds=4.0,
+                    )
                     print("The target has been reached, searching for another target")
                 else:
                     print("The target has been reached, stopping the simulation")
                     break
 
-            if step % STEP ==0:
+            if step % STEP == 0:
+                print(step / STEP, end="")
                 save = True
-                print(step / STEP)
             control = agent.run_step()
             control.manual_gear_shift = False
             world.player.apply_control(control)
-            step+=1
+            step += 1
     finally:
         model.setting_recover()
         if world is not None:
@@ -132,73 +145,85 @@ def main(args):
             if tasks:
                 for t in tasks:
                     t.join()
-                
+
         pygame.quit()
 
 
-if __name__ == '__main__':
-    
-    
-    argparser = argparse.ArgumentParser(
-        description='CARLA Automatic Control Client')
+if __name__ == "__main__":
+
+    argparser = argparse.ArgumentParser(description="CARLA Automatic Control Client")
     argparser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        dest='debug',
-        help='Print debug information')
+        "-v",
+        "--verbose",
+        action="store_true",
+        dest="debug",
+        help="Print debug information",
+    )
     argparser.add_argument(
-        '--host',
-        metavar='H',
-        default='127.0.0.1',
-        help='IP of the host server (default: 127.0.0.1)')
+        "--host",
+        metavar="H",
+        default="127.0.0.1",
+        help="IP of the host server (default: 127.0.0.1)",
+    )
     argparser.add_argument(
-        '-p', '--port',
-        metavar='P',
+        "-p",
+        "--port",
+        metavar="P",
         default=2000,
         type=int,
-        help='TCP port to listen to (default: 2000)')
+        help="TCP port to listen to (default: 2000)",
+    )
     argparser.add_argument(
-        '--res',
-        metavar='WIDTHxHEIGHT',
-        default='1280x720',
-        help='Window resolution (default: 1280x720)')
+        "--res",
+        metavar="WIDTHxHEIGHT",
+        default="1280x720",
+        help="Window resolution (default: 1280x720)",
+    )
     argparser.add_argument(
-        '--sync',
-        action='store_true',
-        help='Synchronous mode execution')
+        "--sync", action="store_true", help="Synchronous mode execution"
+    )
     argparser.add_argument(
-        '--filter',
-        metavar='PATTERN',
-        default='vehicle.*',
-        help='Actor filter (default: "vehicle.*")')
+        "--filter",
+        metavar="PATTERN",
+        default="vehicle.*",
+        help='Actor filter (default: "vehicle.*")',
+    )
     argparser.add_argument(
-        '-l', '--loop',
-        action='store_true',
-        dest='loop',
-        help='Sets a new random destination upon reaching the previous one (default: False)')
+        "-l",
+        "--loop",
+        action="store_true",
+        dest="loop",
+        help="Sets a new random destination upon reaching the previous one (default: False)",
+    )
     argparser.add_argument(
-        "-a", "--agent", type=str,
+        "-a",
+        "--agent",
+        type=str,
         choices=["Behavior", "Basic"],
         help="select which agent to run",
-        default="Behavior")
+        default="Behavior",
+    )
     argparser.add_argument(
-        '-b', '--behavior', type=str,
+        "-b",
+        "--behavior",
+        type=str,
         choices=["cautious", "normal", "aggressive"],
-        help='Choose one of the possible agent behaviors (default: normal) ',
-        default='normal')
+        help="Choose one of the possible agent behaviors (default: normal) ",
+        default="normal",
+    )
     argparser.add_argument(
-        '-s', '--seed',
-        help='Set seed for repeating executions (default: None)',
+        "-s",
+        "--seed",
+        help="Set seed for repeating executions (default: None)",
         default=None,
-        type=int)
+        type=int,
+    )
 
     args = argparser.parse_args()
 
-
     log_level = logging.DEBUG if args.debug else logging.INFO
-    #logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
+    # logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
 
-    #logging.info('listening to server %s:%s', args.host, args.port)
-
+    # logging.info('listening to server %s:%s', args.host, args.port)
 
     main(args)
