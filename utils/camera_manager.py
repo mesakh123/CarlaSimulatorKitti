@@ -7,6 +7,8 @@ from carla import ColorConverter as cc
 import weakref
 import numpy as np
 import pygame
+import random
+import cv2
 
 
 class CameraManager(object):
@@ -128,7 +130,7 @@ class CameraManager(object):
         """Render method"""
         if self.surface is not None:
             image = pygame.surfarray.array3d(display)
-            print("Image type", type(image))
+            cv2.imsave("{}.png".format(random.randint(1, 14551)), image)
             display.blit(self.surface, (0, 0))
 
     def __init_calibration_matrix(self):
