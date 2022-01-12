@@ -54,9 +54,6 @@ def save_data():
                 dtsave.save_training_files(data)
                 save = False
             sleep(1)
-            print("saved")
-        else:
-            print()
 
 
 def main(args):
@@ -128,7 +125,7 @@ def main(args):
                     break
 
             if step % STEP == 0:
-                print(step / STEP, end="")
+                print(step / STEP)
                 save = True
             control = agent.run_step()
             control.manual_gear_shift = False
