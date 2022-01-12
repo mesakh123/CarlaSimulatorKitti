@@ -96,6 +96,7 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
         and num_vertices_outside_camera < MAX_OUT_VERTICES_FOR_RENDER
     ):
         obj_tp = obj_type(obj)
+        print("classes ", obj_tp)
         midpoint = midpoint_from_agent_location(obj_transform.location, extrinsic)
         bbox_2d = calc_projected_2d_bbox(vertices_pos2d)
         rotation_y = (
