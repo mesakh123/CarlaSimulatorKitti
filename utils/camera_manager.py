@@ -172,9 +172,9 @@ class CameraManager(object):
         else:
             image.convert(self.sensors[self.index][1])
             array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
-            cv2.imwrite("{}.png".format(random.randint(1, 14551)), array)
             array = np.reshape(array, (image.height, image.width, 4))
             array = array[:, :, :3]
+            cv2.imwrite("{}.png".format(random.randint(1, 14551)), array)
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
         if self.recording:
