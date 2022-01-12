@@ -127,9 +127,9 @@ class CameraManager(object):
     def render(self, display):
         """Render method"""
         if self.surface is not None:
-            image = self.surface
+            image = pygame.surfarray.array3d(display)
             print("Image type", type(image))
-            display.blit(image, (0, 0))
+            display.blit(self.surface, (0, 0))
 
     def __init_calibration_matrix(self):
         image_x = float(self.sensor.attributes["image_size_x"])
