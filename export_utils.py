@@ -22,12 +22,8 @@ def save_ref_files(OUTPUT_FOLDER, id):
     """Appends the id of the given record to the files"""
     for name in ["train.txt", "val.txt", "trainval.txt"]:
         path = os.path.join(OUTPUT_FOLDER, name)
-        # with open(path, 'a') as f:
-        #    f.write("{0:06}".format(id) + '\n')
-        f = os.open(path, os.O_CREAT | os.O_APPEND | os.O_NONBLOCK | os.O_RDWR)
-        os.write(f, str.encode("{0:06}".format(id) + "\n"))
-        os.close(f)
-
+        with open(path, 'a') as f:
+            f.write("{0:06}".format(id) + '\n')
         # logging.info("Wrote reference files to %s", path)
 
 
@@ -85,10 +81,10 @@ def save_lidar_data(filename, point_cloud, format="bin"):
 
 def save_label_data(filename, datapoints):
 
-    f = os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK)
-    out_str = "\n".join([str(point) for point in datapoints if point])
-    os.write(f, str.encode(out_str))
-    os.close(f)
+    with open(filename, 'w') as f:
+        out_str = "\n".join([str(point) for point in datapoints if point])
+        f.write(out_str)
+
     # logging.info("Wrote kitti data to %s", filename)
 
 
@@ -152,25 +148,21 @@ def save_calibration_matrices(transform, filename, intrinsic_mat):
     TR_imu_to_velo = np.column_stack((TR_imu_to_velo, np.array([0, 0, 0])))
 
     def write_flat(f, name, arr):
-        os.write(
-            f,
-            str.encode(
-                "{}: {}\n".format(
-                    name, " ".join(map(str, arr.flatten(ravel_mode).squeeze()))
-                )
-            ),
+        f.write(
+            "{}: {}\n".format(
+                name, " ".join(map(str, arr.flatten(ravel_mode).squeeze()))
+            )
         )
 
     # All matrices are written on a line with spacing
-    f = os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK)
-    for i in range(
-        4
-    ):  # Avod expects all 4 P-matrices even though we only use the first
-        write_flat(f, "P" + str(i), P0)
-    write_flat(f, "R0_rect", R0)
-    write_flat(f, "Tr_velo_to_cam", TR_velodyne)
-    write_flat(f, "TR_imu_to_velo", TR_imu_to_velo)
-    os.close(f)
+    with open(filename, 'w') as f:
+        for i in range(
+            4
+        ):  # Avod expects all 4 P-matrices even though we only use the first
+            write_flat(f, "P" + str(i), P0)
+        write_flat(f, "R0_rect", R0)
+        write_flat(f, "Tr_velo_to_cam", TR_velodyne)
+        write_flat(f, "TR_imu_to_velo", TR_imu_to_velo)
     # logging.info("Wrote all calibration matrices to %s", filename)
 
 
