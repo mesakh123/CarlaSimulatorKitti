@@ -12,7 +12,7 @@ import pygame
 class CameraManager(object):
     """Class for camera management"""
 
-    def __init__(self, parent_actor, hud, predictions: None):
+    def __init__(self, parent_actor, hud, predictions=None):
         """Constructor method"""
         self.sensor = None
         self.surface = None
