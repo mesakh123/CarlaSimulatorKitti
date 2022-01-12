@@ -25,6 +25,8 @@ MAX_OUT_VERTICES_FOR_RENDER = cfg["FILTER_CONFIG"]["MAX_OUT_VERTICES_FOR_RENDER"
 WINDOW_WIDTH = cfg["SENSOR_CONFIG"]["DEPTH_RGB"]["ATTRIBUTE"]["image_size_x"]
 WINDOW_HEIGHT = cfg["SENSOR_CONFIG"]["DEPTH_RGB"]["ATTRIBUTE"]["image_size_y"]
 
+KITTI_CLASSES = [""]
+
 
 def objects_filter(data):
     environment_objects = data["environment_objects"]
@@ -96,7 +98,8 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
         and num_vertices_outside_camera < MAX_OUT_VERTICES_FOR_RENDER
     ):
         obj_tp = obj_type(obj)
-        print("classes ", obj_tp)
+        if obj_tp not in KITTI_CLASSES:
+            return None, None
         midpoint = midpoint_from_agent_location(obj_transform.location, extrinsic)
         bbox_2d = calc_projected_2d_bbox(vertices_pos2d)
         rotation_y = (
@@ -161,10 +164,8 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
 
 def obj_type(obj):
     if isinstance(obj, carla.EnvironmentObject):
-        print("obj.type ", obj.type)
         return obj.type
     else:
-        print("obj.type_id ", obj.type_id)
         if obj.type_id.find("walker") is not -1:
             return "Pedestrian"
         if obj.type_id.find("vehicle") is not -1:

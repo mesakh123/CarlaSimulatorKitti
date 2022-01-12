@@ -53,8 +53,7 @@ def save_data():
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
                 save = False
-                print("saved", "")
-            sleep(1)
+                print("saved", end="")
 
 
 def main(args):
@@ -125,10 +124,10 @@ def main(args):
                     print("The target has been reached, stopping the simulation")
                     break
 
+            print(step / STEP, " ", end="")
             if step % STEP == 0:
-                print(step / STEP, " ", end="")
                 save = True
-                print("")
+            print("")
             control = agent.run_step()
             control.manual_gear_shift = False
             world.player.apply_control(control)
