@@ -101,7 +101,6 @@ def main(args):
         clock = pygame.time.Clock()
 
         t = threading.Thread(target=save_data, args=())
-        t.daemon = True
         t.start()
         while True:
             clock.tick()
