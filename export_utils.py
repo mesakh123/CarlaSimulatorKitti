@@ -25,7 +25,7 @@ def save_ref_files(OUTPUT_FOLDER, id):
         # with open(path, 'a') as f:
         #    f.write("{0:06}".format(id) + '\n')
         f = os.open(path, os.O_CREAT | os.O_APPEND | os.O_NONBLOCK)
-        os.write(f, bytes("{0:06}".format(id) + "\n", "utf-8"))
+        os.write(f, "{0:06}".format(id) + "\n".encode())
         os.close(f)
 
         # logging.info("Wrote reference files to %s", path)
@@ -87,7 +87,7 @@ def save_label_data(filename, datapoints):
 
     f = os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK)
     out_str = "\n".join([str(point) for point in datapoints if point])
-    os.write(f, bytes(out_str))
+    os.write(f, out_str.encode())
     os.close(f)
     # logging.info("Wrote kitti data to %s", filename)
 
@@ -154,11 +154,9 @@ def save_calibration_matrices(transform, filename, intrinsic_mat):
     def write_flat(f, name, arr):
         os.write(
             f,
-            bytes(
-                "{}: {}\n".format(
-                    name, " ".join(map(str, arr.flatten(ravel_mode).squeeze()))
-                )
-            ),
+            "{}: {}\n".format(
+                name, " ".join(map(str, arr.flatten(ravel_mode).squeeze()))
+            ).encode(),
         )
 
     # All matrices are written on a line with spacing
