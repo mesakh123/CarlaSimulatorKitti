@@ -129,8 +129,6 @@ class CameraManager(object):
     def render(self, display):
         """Render method"""
         if self.surface is not None:
-            image = pygame.surfarray.array3d(display)
-            cv2.imwrite("{}.png".format(random.randint(1, 14551)), image)
             display.blit(self.surface, (0, 0))
 
     def __init_calibration_matrix(self):
@@ -174,6 +172,7 @@ class CameraManager(object):
         else:
             image.convert(self.sensors[self.index][1])
             array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
+            cv2.imwrite("{}.png".format(random.randint(1, 14551)), array)
             array = np.reshape(array, (image.height, image.width, 4))
             array = array[:, :, :3]
             array = array[:, :, ::-1]
