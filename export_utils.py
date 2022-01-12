@@ -24,7 +24,7 @@ def save_ref_files(OUTPUT_FOLDER, id):
         path = os.path.join(OUTPUT_FOLDER, name)
         # with open(path, 'a') as f:
         #    f.write("{0:06}".format(id) + '\n')
-        with os.open(path, os.O_CREAT | os.O_APPEND | os.O_NONBLOCK) as f:
+        with open(path, os.O_CREAT | os.O_APPEND | os.O_NONBLOCK) as f:
             f.write("{0:06}".format(id) + "\n")
 
         # logging.info("Wrote reference files to %s", path)
@@ -82,7 +82,7 @@ def save_lidar_data(filename, point_cloud, format="bin"):
 
 def save_label_data(filename, datapoints):
 
-    with os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK) as f:
+    with open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK) as f:
         out_str = "\n".join([str(point) for point in datapoints if point])
         f.write(out_str)
     # logging.info("Wrote kitti data to %s", filename)
@@ -155,7 +155,7 @@ def save_calibration_matrices(transform, filename, intrinsic_mat):
         )
 
     # All matrices are written on a line with spacing
-    with os.open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK) as f:
+    with open(filename, os.O_CREAT | os.O_WRONLY | os.O_NONBLOCK) as f:
         for i in range(
             4
         ):  # Avod expects all 4 P-matrices even though we only use the first
