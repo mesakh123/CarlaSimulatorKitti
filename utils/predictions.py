@@ -3,7 +3,8 @@ import os
 import numpy as np
 
 import onnxruntime
-
+import cv2
+import random
 
 session = None
 
@@ -205,7 +206,7 @@ def predict(origin_img):
 
     ort_inputs = {session.get_inputs()[0].name: img[None, :, :, :]}
     output = session.run(None, ort_inputs)
-    predictions = demo_postprocess(output[0], input_shape, p6=True)[0]
+    predictions = demo_postprocess(output[0], input_shape, p6=False)[0]
 
     boxes = predictions[:, :4]
     scores = predictions[:, 4:5] * predictions[:, 5:]

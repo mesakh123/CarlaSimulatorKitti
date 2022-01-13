@@ -10,12 +10,12 @@ import pygame
 import random
 import cv2
 from .predictions import predict
-
+import copy
 
 class CameraManager(object):
     """Class for camera management"""
 
-    def __init__(self, parent_actor, hud, predictions=None):
+    def __init__(self, parent_actor, hud, predictions=False):
         """Constructor method"""
         self.sensor = None
         self.surface = None
@@ -175,8 +175,9 @@ class CameraManager(object):
             array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
             array = np.reshape(array, (image.height, image.width, 4))
             array = array[:, :, :3]
+            if self.predictions:
+                array = predict(array)
             array = array[:, :, ::-1]
-            array = predict(array)
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
         if self.recording:
             image.save_to_disk("_out/%08d" % image.frame)
