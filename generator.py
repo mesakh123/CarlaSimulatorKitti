@@ -33,6 +33,7 @@ from utils.hud import HUD
 from utils.keyboard import KeyboardControl
 from utils.world import World
 import random
+import queue
 
 
 import threading
@@ -43,21 +44,25 @@ save = False
 model = None
 dtsave = None
 
+tasks = queue.Queue()
+
 
 def save_data():
-    global save, model, dtsave
+    global save, model, dtsave, tasks
     while True:
-        if save:
+        result = tasks.get()
+        if result:
             with threading.Lock():
                 data = model.tick()
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
                 save = False
-                print("saved", end="")
+                print("Step {} saved".format(result))
+            tasks.task_done()
 
 
 def main(args):
-    global save, model, dtsave
+    global save, model, dtsave, tasks
     cfg = cfg_from_yaml_file("configs.yaml")
     model = SynchronyModel(cfg, args)
     dtsave = DataSave(cfg)
@@ -67,7 +72,10 @@ def main(args):
     world = None
     args.sync = True
     args.behaviour = "Basic"
-    tasks = []
+
+    th = threading.Thread(target=save_data, args=())
+    th.setDaemon(True)
+    th.start()
     try:
         model.set_synchrony()
         model.spawn_actors()
@@ -100,8 +108,6 @@ def main(args):
 
         clock = pygame.time.Clock()
 
-        t = threading.Thread(target=save_data, args=())
-        t.start()
         while True:
             clock.tick()
             # model.world.tick()
@@ -123,10 +129,12 @@ def main(args):
                     print("The target has been reached, stopping the simulation")
                     break
 
-            print(step / STEP, " ", end="")
             if step % STEP == 0:
                 save = True
-            print("")
+                tasks.put(step)
+
+            else:
+                print(step / STEP, " ", end="")
             control = agent.run_step()
             control.manual_gear_shift = False
             world.player.apply_control(control)
@@ -139,10 +147,8 @@ def main(args):
             settings.fixed_delta_seconds = None
             world.world.apply_settings(settings)
             world.destroy()
-            if tasks:
-                for t in tasks:
-                    t.join()
 
+        th.join()
         pygame.quit()
 
 
