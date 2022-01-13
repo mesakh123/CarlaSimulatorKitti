@@ -10,12 +10,12 @@ SENSOR_CONFIG:
   RGB:
     TRANSFORM: { location: [0, 0, 1.6], rotation: [0, 0, 0] }
     BLUEPRINT: sensor.camera.rgb
-    ATTRIBUTE: { image_size_x: 720, image_size_y: 360, fov: 90 }
+    ATTRIBUTE: { image_size_x: 1280, image_size_y: 800, fov: 90 }
 
   DEPTH_RGB:
     TRANSFORM: { location: [0, 0, 1.6], rotation: [0, 0, 0] }
     BLUEPRINT: sensor.camera.depth
-    ATTRIBUTE: { image_size_x: 720, image_size_y: 360, fov: 90 }
+    ATTRIBUTE: { image_size_x: 1280, image_size_y: 800, fov: 90 }
 
   LIDAR:
     TRANSFORM: { location: [0, 0, 1.6], rotation: [0, 0, 0] }
