@@ -9,19 +9,27 @@ from config import config_to_trans
 from data_utils import camera_intrinsic, filter_by_distance
 import sys
 import os
-sys.path.append("/opt/carla-simulator/PythonAPI/carla/dist/carla-0.9.12-py3.7-linux-x86_64.egg")
+
+sys.path.append(
+    "/opt/carla-simulator/PythonAPI/carla/dist/carla-0.9.12-py3.7-linux-x86_64.egg"
+)
 try:
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/CarlaSimulatorKitti/carla')
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        + "/CarlaSimulatorKitti/carla"
+    )
 except IndexError:
-    raise RuntimeError(
-        'cannot import carla, make sure numpy package is installed')
+    raise RuntimeError("cannot import carla, make sure numpy package is installed")
 import carla
 
 
 class SynchronyModel:
-    def __init__(self, cfg):
+    def __init__(self, cfg, args=None):
         self.cfg = cfg
-        self.client = carla.Client('127.0.0.1', 2000)
+        if args:
+            self.client = carla.Client(str(args.host), int(args.port))
+        else:
+            self.client = carla.Client("127.0.0.1", 2000)
         self.client.set_timeout(4.0)
         self.world = self.client.get_world()
         self.traffic_manager = self.client.get_trafficmanager()
@@ -31,7 +39,9 @@ class SynchronyModel:
         self.data = {"sensor_data": {}, "environment_data": None}  # 记录每一帧的数据
         self.player = None
         self.image_width = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"]
-        self.image_height = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"]
+        self.image_height = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"][
+            "image_size_y"
+        ]
         self.destination = None
 
     def set_synchrony(self):
@@ -68,8 +78,8 @@ class SynchronyModel:
             random.shuffle(spawn_points)
             num_of_vehicles = num_of_vehicles
         elif num_of_vehicles > number_of_spawn_points:
-            msg = 'requested %d vehicles, but could only find %d spawn points'
-            #logging.warning(msg, num_of_vehicles, number_of_spawn_points)
+            msg = "requested %d vehicles, but could only find %d spawn points"
+            # logging.warning(msg, num_of_vehicles, number_of_spawn_points)
             num_of_vehicles = number_of_spawn_points
 
         batch = []
@@ -77,13 +87,17 @@ class SynchronyModel:
             if n >= num_of_vehicles:
                 break
             blueprint = random.choice(blueprints)
-            if blueprint.has_attribute('color'):
-                color = random.choice(blueprint.get_attribute('color').recommended_values)
-                blueprint.set_attribute('color', color)
-            if blueprint.has_attribute('driver_id'):
-                driver_id = random.choice(blueprint.get_attribute('driver_id').recommended_values)
-                blueprint.set_attribute('driver_id', driver_id)
-            blueprint.set_attribute('role_name', 'autopilot')
+            if blueprint.has_attribute("color"):
+                color = random.choice(
+                    blueprint.get_attribute("color").recommended_values
+                )
+                blueprint.set_attribute("color", color)
+            if blueprint.has_attribute("driver_id"):
+                driver_id = random.choice(
+                    blueprint.get_attribute("driver_id").recommended_values
+                )
+                blueprint.set_attribute("driver_id", driver_id)
+            blueprint.set_attribute("role_name", "autopilot")
             batch.append(carla.command.SpawnActor(blueprint, transform))
 
             for response in self.client.apply_batch_sync(batch):
@@ -93,7 +107,9 @@ class SynchronyModel:
                     self.actors["non_agents"].append(response.actor_id)
 
         # 生成行人actors
-        blueprintsWalkers = self.world.get_blueprint_library().filter("walker.pedestrian.*")
+        blueprintsWalkers = self.world.get_blueprint_library().filter(
+            "walker.pedestrian.*"
+        )
         spawn_points = []
         for i in range(num_of_walkers):
             spawn_point = carla.Transform()
@@ -105,8 +121,8 @@ class SynchronyModel:
         batch = []
         for spawn_point in spawn_points:
             walker_bp = random.choice(blueprintsWalkers)
-            if walker_bp.has_attribute('is_invincible'):
-                walker_bp.set_attribute('is_invincible', 'false')
+            if walker_bp.has_attribute("is_invincible"):
+                walker_bp.set_attribute("is_invincible", "false")
             batch.append(carla.command.SpawnActor(walker_bp, spawn_point))
 
         for response in self.client.apply_batch_sync(batch, True):
@@ -114,8 +130,11 @@ class SynchronyModel:
                 continue
             else:
                 self.actors["walkers"].append(response.actor_id)
-        print("spawn {} vehicles and {} walkers".format(len(self.actors["non_agents"]),
-                                                        len(self.actors["walkers"])))
+        print(
+            "spawn {} vehicles and {} walkers".format(
+                len(self.actors["non_agents"]), len(self.actors["walkers"])
+            )
+        )
         self.world.tick()
 
     def set_actors_route(self):
@@ -125,11 +144,16 @@ class SynchronyModel:
         for vehicle in vehicle_actors:
             vehicle.set_autopilot(True, self.traffic_manager.get_port())
 
-        walker_controller_bp = self.world.get_blueprint_library().find('controller.ai.walker')
+        walker_controller_bp = self.world.get_blueprint_library().find(
+            "controller.ai.walker"
+        )
         batch = []
         for i in range(len(self.actors["walkers"])):
-            batch.append(carla.command.SpawnActor(walker_controller_bp, carla.Transform(),
-                                                  self.actors["walkers"][i]))
+            batch.append(
+                carla.command.SpawnActor(
+                    walker_controller_bp, carla.Transform(), self.actors["walkers"][i]
+                )
+            )
         controllers_id = []
         for response in self.client.apply_batch_sync(batch, True):
             if response.error:
@@ -148,14 +172,22 @@ class SynchronyModel:
             self.world.get_actor(con_id).set_max_speed(10)
 
     def spawn_agent(self):
-        vehicle_bp = random.choice(self.world.get_blueprint_library().filter(self.cfg["AGENT_CONFIG"]["BLUEPRINT"]))
+        vehicle_bp = random.choice(
+            self.world.get_blueprint_library().filter(
+                self.cfg["AGENT_CONFIG"]["BLUEPRINT"]
+            )
+        )
         trans_cfg = self.cfg["AGENT_CONFIG"]["TRANSFORM"]
         transform = config_to_trans(trans_cfg)
         transform = random.choice(self.world.get_map().get_spawn_points())
         success = False
         while not success:
             try:
-                vehicle_bp = random.choice(self.world.get_blueprint_library().filter(self.cfg["AGENT_CONFIG"]["BLUEPRINT"]))
+                vehicle_bp = random.choice(
+                    self.world.get_blueprint_library().filter(
+                        self.cfg["AGENT_CONFIG"]["BLUEPRINT"]
+                    )
+                )
                 trans_cfg = self.cfg["AGENT_CONFIG"]["TRANSFORM"]
                 transform = config_to_trans(trans_cfg)
                 transform = random.choice(self.world.get_map().get_spawn_points())
@@ -164,9 +196,9 @@ class SynchronyModel:
             except:
                 pass
         agent.set_autopilot(True, self.traffic_manager.get_port())
-        
+
         self.player = agent
-        
+
         self.actors["agents"].append(agent)
 
         self.actors["sensors"][agent] = []
@@ -175,12 +207,18 @@ class SynchronyModel:
             for attr, val in config["ATTRIBUTE"].items():
                 sensor_bp.set_attribute(attr, str(val))
             trans_cfg = config["TRANSFORM"]
-            transform = carla.Transform(carla.Location(trans_cfg["location"][0],
-                                                       trans_cfg["location"][1],
-                                                       trans_cfg["location"][2]),
-                                        carla.Rotation(trans_cfg["rotation"][0],
-                                                       trans_cfg["rotation"][1],
-                                                       trans_cfg["rotation"][2]))
+            transform = carla.Transform(
+                carla.Location(
+                    trans_cfg["location"][0],
+                    trans_cfg["location"][1],
+                    trans_cfg["location"][2],
+                ),
+                carla.Rotation(
+                    trans_cfg["rotation"][0],
+                    trans_cfg["rotation"][1],
+                    trans_cfg["rotation"][2],
+                ),
+            )
             sensor = self.world.spawn_actor(sensor_bp, transform, attach_to=agent)
             self.actors["sensors"][agent].append(sensor)
         self.world.tick()
@@ -197,7 +235,9 @@ class SynchronyModel:
         ret = {"environment_objects": None, "actors": None, "agents_data": {}}
         self.frame = self.world.tick()
 
-        ret["environment_objects"] = self.world.get_environment_objects(carla.CityObjectLabel.Any)
+        ret["environment_objects"] = self.world.get_environment_objects(
+            carla.CityObjectLabel.Any
+        )
         ret["actors"] = self.world.get_actors()
         image_width = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"]
         image_height = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"]
@@ -206,10 +246,15 @@ class SynchronyModel:
             assert all(x.frame == self.frame for x in data)
             ret["agents_data"][agent] = {}
             ret["agents_data"][agent]["sensor_data"] = data
-            ret["agents_data"][agent]["intrinsic"] = camera_intrinsic(image_width, image_height)
+            ret["agents_data"][agent]["intrinsic"] = camera_intrinsic(
+                image_width, image_height
+            )
             ret["agents_data"][agent]["extrinsic"] = np.mat(
-                self.actors["sensors"][agent][0].get_transform().get_matrix())
-        filter_by_distance(ret, self.cfg["FILTER_CONFIG"]["PRELIMINARY_FILTER_DISTANCE"])
+                self.actors["sensors"][agent][0].get_transform().get_matrix()
+            )
+        filter_by_distance(
+            ret, self.cfg["FILTER_CONFIG"]["PRELIMINARY_FILTER_DISTANCE"]
+        )
         return ret
 
     def _retrieve_data(self, q):

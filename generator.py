@@ -59,7 +59,7 @@ def save_data():
 def main(args):
     global save, model, dtsave
     cfg = cfg_from_yaml_file("configs.yaml")
-    model = SynchronyModel(cfg)
+    model = SynchronyModel(cfg, args)
     dtsave = DataSave(cfg)
 
     pygame.init()
