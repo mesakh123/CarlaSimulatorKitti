@@ -9,6 +9,7 @@ import numpy as np
 import pygame
 import random
 import cv2
+from .predictions import predict
 
 
 class CameraManager(object):
@@ -174,9 +175,8 @@ class CameraManager(object):
             array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
             array = np.reshape(array, (image.height, image.width, 4))
             array = array[:, :, :3]
-            # Predict here
-
             array = array[:, :, ::-1]
+            array = predict(array)
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
         if self.recording:
             image.save_to_disk("_out/%08d" % image.frame)
