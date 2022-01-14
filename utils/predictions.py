@@ -239,6 +239,7 @@ def predict_remote(model_host, model_port, image, conf=0.6):
             "http://{}:{}/predict".format(model_host, model_port),
             data=encoded_image.tobytes(),
         )
+        result = result["inferences"]
     except:
         pass
     if result is not None:

@@ -194,7 +194,6 @@ class CameraManager(object):
                     self.dets, array = predict_remote(
                         self.model_host, self.model_port, array
                     )
-                    print("predict_remote finished")
                     predicted = True
                 except:
                     pass
