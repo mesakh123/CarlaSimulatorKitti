@@ -214,7 +214,7 @@ if __name__ == "__main__":
     argparser.add_argument(
         "--predict",
         action="store_true",
-        dest="loop",
+        dest="predict",
         help="Predict images on pygame (default: False)",
     )
     argparser.add_argument(
