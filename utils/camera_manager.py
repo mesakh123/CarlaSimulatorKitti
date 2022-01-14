@@ -191,7 +191,9 @@ class CameraManager(object):
                 try:
                     if self.model_host is None or self.model_port is None:
                         raise Exception
-                    array = predict_remote(self.model_host, self.model_port, array)
+                    self.dets, array = predict_remote(
+                        self.model_host, self.model_port, array
+                    )
                     print("predict_remote finished")
                     predicted = True
                 except:
