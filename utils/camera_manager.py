@@ -185,25 +185,21 @@ class CameraManager(object):
             array = array[:, :, :3]
             predicted = False
             try:
-                try:
-                    if self.model_host is None or self.model_port is None:
-                        raise Exception
-                    array = predic_remote(self.model_host, self.model_port, array)
+                if self.model_host is None or self.model_port is None:
+                    raise Exception
+                array = predic_remote(self.model_host, self.model_port, array)
 
-                    predicted = True
-                except:
-                    pass
-
-                if not predicted:
-                    try:
-                        if not self.predictions:
-                            raise
-                        array = predict(array)
-                    except:
-                        pass
-
+                predicted = True
             except:
                 pass
+
+            if not predicted:
+                try:
+                    if not self.predictions:
+                        raise Exception
+                    array = predict(array)
+                except:
+                    pass
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
         if self.recording:
