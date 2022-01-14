@@ -9,12 +9,13 @@ import cv2
 from .custom_classes import COCO_CLASSES, KITTI_CLASSES
 
 session = None
+EP_list = ["CUDAExecutionProvider", "CPUExecutionProvider"]
 
 
 def load_model():
     global session
     session = onnxruntime.InferenceSession(
-        os.path.join(os.getcwd(), "models", "yolox_s.onnx")
+        os.path.join(os.getcwd(), "models", "yolox_s.onnx"), providers=EP_list
     )
 
 
