@@ -205,7 +205,7 @@ class CameraManager(object):
                     except:
                         pass
             else:
-                if self.dets:
+                if self.dets is not None:
                     final_boxes, final_scores, final_cls_inds = (
                         self.dets[:, :4],
                         self.dets[:, 4],
