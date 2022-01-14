@@ -1,8 +1,6 @@
-
 # ==============================================================================
 # -- World ---------------------------------------------------------------
 # ==============================================================================
-
 
 
 import carla
@@ -16,19 +14,22 @@ from .global_functions import *
 import random
 from .global_functions import *
 
-class World(object):
-    """ Class representing the surrounding environment """
 
-    def __init__(self, carla_world, hud, args,remote_player: None):
+class World(object):
+    """Class representing the surrounding environment"""
+
+    def __init__(self, carla_world, hud, args, remote_player: None):
         """Constructor method"""
         self._args = args
         self.world = carla_world
         try:
             self.map = self.world.get_map()
         except RuntimeError as error:
-            print('RuntimeError: {}'.format(error))
-            print('  The server could not send the OpenDRIVE (.xodr) file:')
-            print('  Make sure it exists, has the same name of your town, and is correct.')
+            print("RuntimeError: {}".format(error))
+            print("  The server could not send the OpenDRIVE (.xodr) file:")
+            print(
+                "  Make sure it exists, has the same name of your town, and is correct."
+            )
             sys.exit(1)
         self.hud = hud
         self.player = None
@@ -39,7 +40,7 @@ class World(object):
         self._weather_presets = find_weather_presets()
         self._weather_index = 0
         self._actor_filter = args.filter
-        self.restart(args,remote_player)
+        self.restart(args, remote_player)
         self.world.on_tick(hud.on_world_tick)
         self.recording_enabled = False
         self.recording_start = 0
@@ -48,14 +49,20 @@ class World(object):
         """Restart the world"""
         # Keep same camera config if the camera manager exists.
         cam_index = self.camera_manager.index if self.camera_manager is not None else 0
-        cam_pos_id = self.camera_manager.transform_index if self.camera_manager is not None else 0
+        cam_pos_id = (
+            self.camera_manager.transform_index
+            if self.camera_manager is not None
+            else 0
+        )
 
         # Get a random blueprint.
-        blueprint = random.choice(self.world.get_blueprint_library().filter(self._actor_filter))
-        blueprint.set_attribute('role_name', 'hero')
-        if blueprint.has_attribute('color'):
-            color = random.choice(blueprint.get_attribute('color').recommended_values)
-            blueprint.set_attribute('color', color)
+        blueprint = random.choice(
+            self.world.get_blueprint_library().filter(self._actor_filter)
+        )
+        blueprint.set_attribute("role_name", "hero")
+        if blueprint.has_attribute("color"):
+            color = random.choice(blueprint.get_attribute("color").recommended_values)
+            blueprint.set_attribute("color", color)
 
         # Spawn the player.
         if self.player is not None:
@@ -68,14 +75,16 @@ class World(object):
             self.modify_vehicle_physics(self.player)
         while self.player is None:
             if not self.map.get_spawn_points():
-                print('There are no spawn points available in your map/town.')
-                print('Please add some Vehicle Spawn Point to your UE4 scene.')
+                print("There are no spawn points available in your map/town.")
+                print("Please add some Vehicle Spawn Point to your UE4 scene.")
                 sys.exit(1)
             if remote_player is not None:
                 self.player = remote_player
             else:
                 spawn_points = self.map.get_spawn_points()
-                spawn_point = random.choice(spawn_points) if spawn_points else carla.Transform()
+                spawn_point = (
+                    random.choice(spawn_points) if spawn_points else carla.Transform()
+                )
                 self.player = self.world.try_spawn_actor(blueprint, spawn_point)
             self.modify_vehicle_physics(self.player)
 
@@ -88,7 +97,7 @@ class World(object):
         self.collision_sensor = CollisionSensor(self.player, self.hud)
         self.lane_invasion_sensor = LaneInvasionSensor(self.player, self.hud)
         self.gnss_sensor = GnssSensor(self.player)
-        self.camera_manager = CameraManager(self.player, self.hud,)
+        self.camera_manager = CameraManager(self.player, self.hud, args)
         self.camera_manager.transform_index = cam_pos_id
         self.camera_manager.set_sensor(cam_index, notify=False)
         actor_type = get_actor_display_name(self.player)
@@ -99,11 +108,11 @@ class World(object):
         self._weather_index += -1 if reverse else 1
         self._weather_index %= len(self._weather_presets)
         preset = self._weather_presets[self._weather_index]
-        self.hud.notification('Weather: %s' % preset[1])
+        self.hud.notification("Weather: %s" % preset[1])
         self.player.get_world().set_weather(preset[0])
 
     def modify_vehicle_physics(self, actor):
-        #If actor is not a vehicle, we cannot use the physics control
+        # If actor is not a vehicle, we cannot use the physics control
         try:
             physics_control = actor.get_physics_control()
             physics_control.use_sweep_wheel_collision = True
@@ -133,7 +142,8 @@ class World(object):
             self.collision_sensor.sensor,
             self.lane_invasion_sensor.sensor,
             self.gnss_sensor.sensor,
-            self.player]
+            self.player,
+        ]
         for actor in actors:
             if actor is not None:
                 actor.destroy()

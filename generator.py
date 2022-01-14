@@ -212,6 +212,12 @@ if __name__ == "__main__":
         help="Sets a new random destination upon reaching the previous one (default: False)",
     )
     argparser.add_argument(
+        "--predict",
+        action="store_true",
+        dest="loop",
+        help="Predict images on pygame (default: False)",
+    )
+    argparser.add_argument(
         "-a",
         "--agent",
         type=str,

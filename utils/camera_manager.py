@@ -16,14 +16,14 @@ import copy
 class CameraManager(object):
     """Class for camera management"""
 
-    def __init__(self, parent_actor, hud, predictions=False, args=None):
+    def __init__(self, parent_actor, hud, args=None):
         """Constructor method"""
         self.sensor = None
         self.surface = None
         self._parent = parent_actor
         self.hud = hud
         self.recording = False
-        self.predictions = predictions
+        self.predictions = args.predict
         bound_y = 0.5 + self._parent.bounding_box.extent.y
         self.model_host = None
         self.model_port = None
