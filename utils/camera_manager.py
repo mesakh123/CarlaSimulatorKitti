@@ -30,7 +30,7 @@ class CameraManager(object):
 
         if args:
             self.model_host = args.model_host
-            self.model_host = args.model_post
+            self.model_port = args.model_port
 
         attachment = carla.AttachmentType
         self._camera_transforms = [
