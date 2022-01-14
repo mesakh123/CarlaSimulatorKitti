@@ -235,11 +235,11 @@ def predict_remote(model_host, model_port, image, conf=0.6):
     success, encoded_image = cv2.imencode(".png", image)
     result = None
     try:
-        result = requests.Post(
+        result = requests.post(
             "http://{}:{}/predict".format(model_host, model_port),
             data=encoded_image.tobytes(),
         )
-        result = result["inferences"]
+        result = result.json()["inferences"]
     except:
         pass
     if result is not None:
