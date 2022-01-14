@@ -221,10 +221,10 @@ def predict(
             conf=conf,
             class_names=KITTI_CLASSES,
         )
-    return dets, origin_img
+    return (final_boxes, final_scores, final_cls_inds), origin_img
 
 
-def predic_remote(model_host, model_port, image, conf=0.6):
+def predict_remote(model_host, model_port, image, conf=0.6):
 
     success, encoded_image = cv2.imencode(".png", image)
     try:
@@ -239,13 +239,13 @@ def predic_remote(model_host, model_port, image, conf=0.6):
         indexes_from_coco = [int(COCO_CLASSES.index(v)) for v in result_class]
         image = vis(
             image.astype(np.int32),
-            result['"bbox'],
+            result["bbox"],
             result["prob"],
             indexes_from_coco,
             conf=conf,
             class_names=KITTI_CLASSES,
         )
-    return image
+    return (result["bbox"], result["prob"], indexes_from_coco), image
 
 
 _COLORS = (

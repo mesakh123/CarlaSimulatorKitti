@@ -7,7 +7,7 @@ from carla import ColorConverter as cc
 import weakref
 import numpy as np
 import pygame
-from .predictions import predict, predic_remote, vis
+from .predictions import predict, predict_remote, vis
 from .custom_classes import KITTI_CLASSES
 
 
@@ -191,8 +191,8 @@ class CameraManager(object):
                 try:
                     if self.model_host is None or self.model_port is None:
                         raise Exception
-                    array = predic_remote(self.model_host, self.model_port, array)
-
+                    array = predict_remote(self.model_host, self.model_port, array)
+                    print("predict_remote finished")
                     predicted = True
                 except:
                     pass
@@ -206,11 +206,7 @@ class CameraManager(object):
                         pass
             else:
                 if self.dets is not None:
-                    final_boxes, final_scores, final_cls_inds = (
-                        self.dets[:, :4],
-                        self.dets[:, 4],
-                        self.dets[:, 5],
-                    )
+                    final_boxes, final_scores, final_cls_inds = self.dets
                     array = vis(
                         array.astype(np.int32),
                         final_boxes,
