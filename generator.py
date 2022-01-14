@@ -240,6 +240,13 @@ if __name__ == "__main__":
         default=None,
         type=int,
     )
+    argparser.add_argument(
+        "--conf",
+        help="Set confidence of bbox (default: 0.6)",
+        default=0.6,
+        dest="conf",
+        type=float,
+    )
 
     args = argparser.parse_args()
 

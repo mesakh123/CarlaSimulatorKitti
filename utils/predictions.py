@@ -221,7 +221,7 @@ def predict(
             conf=conf,
             class_names=KITTI_CLASSES,
         )
-    return origin_img
+    return dets, origin_img
 
 
 def predic_remote(model_host, model_port, image, conf=0.6):
