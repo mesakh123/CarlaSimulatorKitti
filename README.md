@@ -4,7 +4,6 @@ Pygame CARLA Simulator to produce KITTI 2D/3D object detection
 
 Source Code : https://github.com/mmmmaomao/DataGenerator
 
-
 **Folder Format**
 
 dataset |
@@ -51,7 +50,6 @@ label 标定的目标主要分为两类，第一类是我们自己生成的 acto
 
 **Usage**
 
-
 Carla 版本：carla 0.9.12
 
 Only collecting Data and show Pygame
@@ -60,10 +58,16 @@ Only collecting Data and show Pygame
 python3 generator.py
 ```
 
-To enable predict
+To enable predict on local model (put model on models/yolox_s.onnx)
 
 ```
 python3 generator.py --predict
+```
+
+To enable predict (remote API, i.e 'http://<model_host>:<model_port>/predict')
+
+```
+python3 generator.py --predict --model-host=0.0.0.0 --model-port=7777
 ```
 
 SynchronyModel.py，场景类，负责建立 client，设置 server，生成 actors，驱动 server 计算并获取数据
