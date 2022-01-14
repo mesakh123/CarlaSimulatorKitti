@@ -253,7 +253,8 @@ def predict_remote(model_host, model_port, image, conf=0.6):
             conf=conf,
             class_names=KITTI_CLASSES,
         )
-    return (result["bbox"], result["prob"], indexes_from_coco), image
+        return (result["bbox"], result["prob"], indexes_from_coco), image
+    return None, image
 
 
 _COLORS = (
