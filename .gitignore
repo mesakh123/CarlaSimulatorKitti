@@ -2,3 +2,6 @@
 dataset
 test
 data
+
+.vscode
+.DS_Store
