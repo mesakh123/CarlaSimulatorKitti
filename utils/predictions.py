@@ -190,7 +190,7 @@ def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 # origin_img : cv2 image
 def predict(
     origin_img,
-    conf=0.6,
+    conf=0.1,
 ):
     global session
     if session is None:
@@ -219,6 +219,7 @@ def predict(
             final_boxes,
             final_scores,
             final_cls_inds,
+            conf=conf,
             class_names=KITTI_CLASSES,
         )
     return origin_img
