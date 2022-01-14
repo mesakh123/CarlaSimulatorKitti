@@ -18,7 +18,10 @@ def load_model():
     )
 
 
-load_model()
+try:
+    load_model()
+except:
+    pass
 
 
 def nms(boxes, scores, nms_thr):
@@ -193,7 +196,10 @@ def predict(
 ):
     global session
     if session is None:
-        load_model()
+        try:
+            load_model()
+        except:
+            return None, origin_img
     input_shape = (640, 640)
     img, ratio = preprocess(origin_img, input_shape)
 
