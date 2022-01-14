@@ -2,6 +2,9 @@
 
 Pygame CARLA Simulator to produce KITTI 2D/3D object detection
 
+Source Code : https://github.com/mmmmaomao/DataGenerator
+
+
 **Folder Format**
 
 dataset |
@@ -46,9 +49,9 @@ label：
 
 label 标定的目标主要分为两类，第一类是我们自己生成的 actors(Car 和 Pedestrian)；第二类是地图中存在的环境目标(None，Buildings，Fences，Other，Pedestrians，Poles，RoadLines，Roads，Sidewalks，TrafficSigns，Vegetation，Vehicles，Walls，Sky，Ground，Bridge，RailTrack，GuardRail，TrafficLight，Static，Dynamic，Water，Terrain)
 
-**使用**
+**Usage**
 
-Source Code : https://github.com/mmmmaomao/DataGenerator
+
 Carla 版本：carla 0.9.12
 
 Only collecting Data and show Pygame
