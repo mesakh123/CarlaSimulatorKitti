@@ -178,12 +178,12 @@ if __name__ == "__main__":
     )
 
     argparser.add_argument(
-        "--model_host",
+        "--model-host",
         default=None,
         help="IP of the host server (default: None)",
     )
     argparser.add_argument(
-        "--model_port",
+        "--model-port",
         default=None,
         type=int,
         help="TCP port to listen to model_host (default: None)",
