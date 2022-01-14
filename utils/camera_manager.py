@@ -187,38 +187,22 @@ class CameraManager(object):
             array = np.reshape(array, (image.height, image.width, 4))
             array = array[:, :, :3]
             predicted = False
-            if self.count % self.STEP == 0:
-                try:
-                    if self.model_host is None or self.model_port is None:
-                        raise Exception
-                    array = predic_remote(self.model_host, self.model_port, array)
+            try:
+                if self.model_host is None or self.model_port is None:
+                    raise Exception
+                array = predic_remote(self.model_host, self.model_port, array)
 
-                    predicted = True
+                predicted = True
+            except:
+                pass
+
+            if not predicted:
+                try:
+                    if not self.predictions:
+                        raise Exception
+                    self.dets, array = predict(array, self.conf)
                 except:
                     pass
-
-                if not predicted:
-                    try:
-                        if not self.predictions:
-                            raise Exception
-                        self.dets, array = predict(array, self.conf)
-                    except:
-                        pass
-            else:
-                if self.dets is not None:
-                    final_boxes, final_scores, final_cls_inds = (
-                        self.dets[:, :4],
-                        self.dets[:, 4],
-                        self.dets[:, 5],
-                    )
-                    array = vis(
-                        array.astype(np.int32),
-                        final_boxes,
-                        final_scores,
-                        final_cls_inds,
-                        conf=self.conf,
-                        class_names=KITTI_CLASSES,
-                    )
 
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
