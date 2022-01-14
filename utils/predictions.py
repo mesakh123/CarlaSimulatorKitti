@@ -227,6 +227,7 @@ def predict(
 def predict_remote(model_host, model_port, image, conf=0.6):
 
     success, encoded_image = cv2.imencode(".png", image)
+    result = None
     try:
         result = requests.Post(
             "http://{}:{}/predict".format(model_host, model_port),
@@ -234,7 +235,7 @@ def predict_remote(model_host, model_port, image, conf=0.6):
         )
     except:
         pass
-    if result:
+    if result is not None:
         result_class = result["class"]
         indexes_from_coco = [int(COCO_CLASSES.index(v)) for v in result_class]
         image = vis(
