@@ -228,7 +228,10 @@ def predic_remote(model_host, model_port, image, conf=0.6):
 
     success, encoded_image = cv2.imencode(".png", image)
     try:
-        result = requests.Post("http://{}:{}/predict", data=encoded_image.tobytes())
+        result = requests.Post(
+            "http://{}:{}/predict".format(model_host, model_port),
+            data=encoded_image.tobytes(),
+        )
     except:
         pass
     if result:
