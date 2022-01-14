@@ -28,6 +28,9 @@ class CameraManager(object):
         self.model_host = None
         self.model_port = None
 
+        self.count = 0
+        self.STEP = 5
+
         if args:
             self.model_host = args.model_host
             self.model_port = args.model_port
@@ -184,23 +187,25 @@ class CameraManager(object):
             array = np.reshape(array, (image.height, image.width, 4))
             array = array[:, :, :3]
             predicted = False
-            try:
-                if self.model_host is None or self.model_port is None:
-                    raise Exception
-                array = predic_remote(self.model_host, self.model_port, array)
-
-                predicted = True
-            except:
-                pass
-
-            if not predicted:
+            if self.count % self.STEP == 0:
                 try:
-                    if not self.predictions:
+                    if self.model_host is None or self.model_port is None:
                         raise Exception
-                    array = predict(array)
+                    array = predic_remote(self.model_host, self.model_port, array)
+
+                    predicted = True
                 except:
                     pass
+
+                if not predicted:
+                    try:
+                        if not self.predictions:
+                            raise Exception
+                        array = predict(array)
+                    except:
+                        pass
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
+            self.count += 1
         if self.recording:
             image.save_to_disk("_out/%08d" % image.frame)

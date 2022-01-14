@@ -5,7 +5,6 @@ import numpy as np
 
 import onnxruntime
 import cv2
-import random
 
 from .custom_classes import COCO_CLASSES, KITTI_CLASSES
 
@@ -215,7 +214,7 @@ def predict(
     if dets is not None:
         final_boxes, final_scores, final_cls_inds = dets[:, :4], dets[:, 4], dets[:, 5]
         origin_img = vis(
-            origin_img,
+            origin_img.astype(np.int32),
             final_boxes,
             final_scores,
             final_cls_inds,
@@ -239,7 +238,7 @@ def predic_remote(model_host, model_port, image, conf=0.6):
         result_class = result["class"]
         indexes_from_coco = [int(COCO_CLASSES.index(v)) for v in result_class]
         image = vis(
-            image,
+            image.astype(np.int32),
             result['"bbox'],
             result["prob"],
             indexes_from_coco,
