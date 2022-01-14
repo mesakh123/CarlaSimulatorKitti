@@ -176,6 +176,19 @@ if __name__ == "__main__":
         type=int,
         help="TCP port to listen to (default: 2000)",
     )
+
+    argparser.add_argument(
+        "--model_host",
+        default=None,
+        help="IP of the host server (default: None)",
+    )
+    argparser.add_argument(
+        "--model_port",
+        default=None,
+        type=int,
+        help="TCP port to listen to model_host (default: None)",
+    )
+
     argparser.add_argument(
         "--res",
         metavar="WIDTHxHEIGHT",

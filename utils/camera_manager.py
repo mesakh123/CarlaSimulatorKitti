@@ -9,13 +9,14 @@ import numpy as np
 import pygame
 import random
 import cv2
-from .predictions import predict
+from .predictions import predict, predic_remote
 import copy
+
 
 class CameraManager(object):
     """Class for camera management"""
 
-    def __init__(self, parent_actor, hud, predictions=False):
+    def __init__(self, parent_actor, hud, predictions=False, args=None):
         """Constructor method"""
         self.sensor = None
         self.surface = None
@@ -24,6 +25,13 @@ class CameraManager(object):
         self.recording = False
         self.predictions = predictions
         bound_y = 0.5 + self._parent.bounding_box.extent.y
+        self.model_host = None
+        self.model_port = None
+
+        if args:
+            self.model_host = args.model_host
+            self.model_host = args.model_post
+
         attachment = carla.AttachmentType
         self._camera_transforms = [
             (
@@ -175,8 +183,27 @@ class CameraManager(object):
             array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
             array = np.reshape(array, (image.height, image.width, 4))
             array = array[:, :, :3]
-            if self.predictions:
-                array = predict(array)
+            predicted = False
+            try:
+                try:
+                    if self.model_host is None or self.model_port is None:
+                        raise Exception
+                    array = predic_remote(self.model_host, self.model_port, array)
+
+                    predicted = True
+                except:
+                    pass
+
+                if not predicted:
+                    try:
+                        if not self.predictions:
+                            raise
+                        array = predict(array)
+                    except:
+                        pass
+
+            except:
+                pass
             array = array[:, :, ::-1]
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
         if self.recording:

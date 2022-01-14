@@ -1,3 +1,4 @@
+import requests
 import cv2
 import os
 import numpy as np
@@ -6,19 +7,9 @@ import onnxruntime
 import cv2
 import random
 
-session = None
+from .custom_classes import COCO_CLASSES, KITTI_CLASSES
 
-KITTI_CLASSES = (
-    "Car",
-    "Cyclist",
-    "DontCare",
-    "Misc",
-    "Pedestrian",
-    "Person_sittin",
-    "Tram",
-    "Truck",
-    "Van",
-)
+session = None
 
 
 def load_model():
@@ -197,7 +188,10 @@ def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
 
 # origin_img : cv2 image
-def predict(origin_img):
+def predict(
+    origin_img,
+    conf=0.6,
+):
     global session
     if session is None:
         load_model()
@@ -225,10 +219,30 @@ def predict(origin_img):
             final_boxes,
             final_scores,
             final_cls_inds,
-            conf=0.6,
             class_names=KITTI_CLASSES,
         )
     return origin_img
+
+
+def predic_remote(model_host, model_port, image, conf=0.6):
+
+    success, encoded_image = cv2.imencode(".png", image)
+    try:
+        result = requests.Post("http://{}:{}/predict", data=encoded_image.tobytes())
+    except:
+        pass
+    if result:
+        result_class = result["class"]
+        indexes_from_coco = [int(COCO_CLASSES.index(v)) for v in result_class]
+        image = vis(
+            image,
+            result['"bbox'],
+            result["prob"],
+            indexes_from_coco,
+            conf=conf,
+            class_names=KITTI_CLASSES,
+        )
+    return image
 
 
 _COLORS = (
