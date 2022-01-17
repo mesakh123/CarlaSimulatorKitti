@@ -49,8 +49,8 @@ def save_data():
     global save, model, dtsave, step, STEP
     while True:
         if step % STEP == 0:
+            time.sleep(1)
             with threading.Lock():
-                time.sleep(1)
                 data = model.tick()
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
