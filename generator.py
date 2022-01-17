@@ -43,26 +43,27 @@ from time import sleep
 save = False
 model = None
 dtsave = None
+step = 0
+STEP = 0
 
 tasks = queue.Queue()
 
 
 def save_data():
-    global save, model, dtsave, tasks
+    global save, model, dtsave, tasks, step, STEP
     while True:
-        result = tasks.get()
-        if result:
+        if step % STEP == 0:
+            sleep(1)
             with threading.Lock():
                 data = model.tick()
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
                 save = False
-                print("Step {} saved".format(result))
-            tasks.task_done()
+                print("Step {} saved".format(step))
 
 
 def main(args):
-    global save, model, dtsave, tasks
+    global save, model, dtsave, tasks, step, STEP
     cfg = cfg_from_yaml_file("configs.yaml")
     model = SynchronyModel(cfg, args)
     dtsave = DataSave(cfg)
@@ -128,10 +129,6 @@ def main(args):
                 else:
                     print("The target has been reached, stopping the simulation")
                     break
-
-            if step % STEP == 0:
-                save = True
-                tasks.put(step)
 
             else:
                 print(step / STEP, " ", end="")
