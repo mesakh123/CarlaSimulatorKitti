@@ -36,6 +36,7 @@ import random
 
 
 import threading
+import time
 
 save = False
 model = None
@@ -45,10 +46,11 @@ STEP = 0
 
 
 def save_data():
-    global save, model, dtsave, tasks, step, STEP
+    global save, model, dtsave, step, STEP
     while True:
         if step % STEP == 0:
             with threading.Lock():
+                time.sleep(1)
                 data = model.tick()
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
