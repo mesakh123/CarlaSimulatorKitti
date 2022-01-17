@@ -74,9 +74,6 @@ def main(args):
     args.sync = True
     args.behaviour = "Basic"
 
-    th = threading.Thread(target=save_data, args=())
-    th.setDaemon(True)
-    th.start()
     try:
         model.set_synchrony()
         model.spawn_actors()
@@ -108,6 +105,10 @@ def main(args):
         agent.set_destination(destination)
 
         clock = pygame.time.Clock()
+
+        th = threading.Thread(target=save_data, args=())
+        th.setDaemon(True)
+        th.start()
 
         while True:
             clock.tick()
