@@ -33,36 +33,31 @@ from utils.hud import HUD
 from utils.keyboard import KeyboardControl
 from utils.world import World
 import random
-import queue
 
 
 import threading
-from time import sleep
-
 
 save = False
 model = None
 dtsave = None
-
-tasks = queue.Queue()
+step = 0
+STEP = 0
 
 
 def save_data():
-    global save, model, dtsave, tasks
+    global save, model, dtsave, tasks, step, STEP
     while True:
-        result = tasks.get()
-        if result:
+        if step % STEP == 0:
             with threading.Lock():
                 data = model.tick()
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
                 save = False
-                print("Step {} saved".format(result))
-            tasks.task_done()
+                print("Step {} saved".format(step))
 
 
 def main(args):
-    global save, model, dtsave, tasks
+    global save, model, dtsave, tasks, step, STEP
     cfg = cfg_from_yaml_file("configs.yaml")
     model = SynchronyModel(cfg, args)
     dtsave = DataSave(cfg)
@@ -73,19 +68,17 @@ def main(args):
     args.sync = True
     args.behaviour = "Basic"
 
-    th = threading.Thread(target=save_data, args=())
-    th.setDaemon(True)
-    th.start()
+    step = 0
+    STEP = cfg["SAVE_CONFIG"]["STEP"]
+    image_width = cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"]
+    image_height = cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"]
+
     try:
         model.set_synchrony()
         model.spawn_actors()
         model.set_actors_route()
         model.spawn_agent()
         model.sensor_listen()
-        step = 0
-        STEP = cfg["SAVE_CONFIG"]["STEP"]
-        image_width = cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"]
-        image_height = cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"]
 
         args.width, args.height = image_width, image_height
 
@@ -107,6 +100,9 @@ def main(args):
         agent.set_destination(destination)
 
         clock = pygame.time.Clock()
+        th = threading.Thread(target=save_data, args=())
+        th.setDaemon(True)
+        th.start()
 
         while True:
             clock.tick()
@@ -129,12 +125,6 @@ def main(args):
                     print("The target has been reached, stopping the simulation")
                     break
 
-            if step % STEP == 0:
-                save = True
-                tasks.put(step)
-
-            else:
-                print(step / STEP, " ", end="")
             control = agent.run_step()
             control.manual_gear_shift = False
             world.player.apply_control(control)
