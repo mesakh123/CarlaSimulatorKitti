@@ -373,6 +373,13 @@ def calc_projected_2d_bbox(vertices_pos2d):
     ]
     min_x, max_x = min(x_coords), max(x_coords)
     min_y, max_y = min(y_coords), max(y_coords)
+
+    image_width = int(cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"])
+    image_height = int(cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"])
+
+    min_x, max_x = max(0, min_x), min(image_width, max_x)
+    min_y, max_y = max(0, min_y), min(image_height, max_y)
+
     return [min_x, min_y, max_x, max_y]
 
 
