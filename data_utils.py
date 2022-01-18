@@ -98,8 +98,6 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
         and num_vertices_outside_camera < MAX_OUT_VERTICES_FOR_RENDER
     ):
         obj_tp = obj_type(obj)
-        if obj_tp not in KITTI_CLASSES:
-            return None, None
         midpoint = midpoint_from_agent_location(obj_transform.location, extrinsic)
         bbox_2d = calc_projected_2d_bbox(vertices_pos2d)
         rotation_y = (
@@ -375,6 +373,13 @@ def calc_projected_2d_bbox(vertices_pos2d):
     ]
     min_x, max_x = min(x_coords), max(x_coords)
     min_y, max_y = min(y_coords), max(y_coords)
+
+    image_width = int(cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"])
+    image_height = int(cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"])
+
+    min_x, max_x = max(0, min_x), min(image_width, max_x)
+    min_y, max_y = max(0, min_y), min(image_height, max_y)
+
     return [min_x, min_y, max_x, max_y]
 
 

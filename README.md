@@ -52,7 +52,13 @@ label 标定的目标主要分为两类，第一类是我们自己生成的 acto
 
 Carla 版本：carla 0.9.12
 
-Only collecting Data and show Pygame
+Only collecting Data
+
+```
+python3 inspector.py
+```
+
+Collecting data and show Pygame
 
 ```
 python3 generator.py
