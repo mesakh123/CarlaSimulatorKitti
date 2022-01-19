@@ -21,7 +21,7 @@ class SynchronousClient:
         self.set_synchronous_mode(True)
 
         self.number_of_cars = int(self.cfg["CARLA_CONFIG"]["NUM_OF_VEHICLES"])
-        self.number_of_walkers = self(self.cfg["CARLA_CONFIG"]["NUM_OF_WALKERS"])
+        self.number_of_walkers = int(self.cfg["CARLA_CONFIG"]["NUM_OF_WALKERS"])
 
         self.ego = None
         self.spectator = None
