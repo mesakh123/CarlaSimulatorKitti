@@ -83,18 +83,35 @@ def sensor_to_sensor(cords, src, dst, homography=False) -> np.array:
 
 
 def vehicle_bbox_to_world(vehicle, homography=False) -> np.array:
-    assert isinstance(vehicle, carla.Vehicle), type(vehicle)
 
     bbox_cords = _create_bbox_points(vehicle)
-    bbox_transform = carla.Transform(vehicle.bounding_box.location)
-    bbox_vehicle_matrix = bbox_transform.get_matrix()
-    vehicle_world_matrix = vehicle.get_transform().get_matrix()
-    bbox_world_matrix = np.dot(vehicle_world_matrix, bbox_vehicle_matrix)
-    world_cords = np.dot(bbox_world_matrix, np.transpose(bbox_cords))
-    if homography:
-        return np.transpose(world_cords)
+    if not isinstance(vehicle, carla.EnvironmentObject):
+        bbox_transform = carla.Transform(
+            vehicle.bounding_box.location, vehicle.bounding_box.rotation
+        )
+
+        bbox_vehicle_matrix = bbox_transform.get_matrix()
+        vehicle_world_matrix = vehicle.get_transform().get_matrix()
+        bbox_world_matrix = np.dot(vehicle_world_matrix, bbox_vehicle_matrix)
+        world_cords = np.dot(bbox_world_matrix, np.transpose(bbox_cords))
+        if homography:
+            return np.transpose(world_cords)
+        else:
+            return np.transpose(world_cords)[:, :3]
+
     else:
-        return np.transpose(world_cords)[:, :3]
+        bbox_transform = carla.Transform(
+            vehicle.bounding_box.location, vehicle.bounding_box.rotation
+        )
+
+        bbox_vehicle_matrix = bbox_transform.get_matrix()
+        vehicle_world_matrix = vehicle.transform.get_matrix()
+        bbox_world_matrix = np.dot(vehicle_world_matrix, bbox_vehicle_matrix)
+        world_cords = np.dot(bbox_world_matrix, np.transpose(bbox_cords))
+        if homography:
+            return np.transpose(world_cords)
+        else:
+            return np.transpose(world_cords)[:, :3]
 
 
 def vehicle_bboxes_to_world(vehicles, homography=False) -> list:
