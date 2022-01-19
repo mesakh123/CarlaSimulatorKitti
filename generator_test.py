@@ -28,9 +28,11 @@ def main(args):
             model.world.tick()
             model.update_spectator()
             if tick % (model.sensor_tick // (1 / model.frames_per_second)) == 0:
+                front.save_data()
                 generate_kitti_label_file(
                     ("%06d.txt" % label_count), model.world, front
                 )
+            label_count += 1
     finally:
         if world:
             vehicles = world.get_actors().filter("vehicle.*")
