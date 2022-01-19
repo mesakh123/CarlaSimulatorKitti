@@ -40,11 +40,12 @@ class World(object):
         self._weather_presets = find_weather_presets()
         self._weather_index = 0
         self._actor_filter = args.filter
+        self.classes = classes
+
         self.restart(args, remote_player)
         self.world.on_tick(hud.on_world_tick)
         self.recording_enabled = False
         self.recording_start = 0
-        self.classes = classes
 
     def restart(self, args, remote_player: None):
         """Restart the world"""
