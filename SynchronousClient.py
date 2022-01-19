@@ -85,8 +85,16 @@ class SynchronousClient:
         self.spectator = self.world.get_spectator()
         self.update_spectator()
 
-    def setup_camera(self, transform, log_dir="training/data", suffix="", **options):
+    def setup_camera(self, transform, log_dir="training/data", suffix=""):
         """transform: = [x, y, z, pitch, yaw, roll]"""
+
+        camera_options = {
+            "image_size_x": self.image_x,
+            "image_size_y": self.image_y,
+            "fov": self.fov,
+            "sensor_tick": self.sensor_tick,
+            "motion_blur_intensity": 0.0,
+        }
 
         camera_location = carla.Location(*transform[0:3])
         camera_rotation = carla.Rotation(*transform[3:6])
@@ -100,7 +108,7 @@ class SynchronousClient:
             log_dir,
             suffix=suffix,
             with_bbox=True,
-            **options
+            **camera_options
         )
 
     def setup_lidar(self, transform, log_dir="trainind/velodyne", **options):
