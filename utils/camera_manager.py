@@ -14,7 +14,7 @@ from .custom_classes import KITTI_CLASSES
 class CameraManager(object):
     """Class for camera management"""
 
-    def __init__(self, parent_actor, hud, args=None):
+    def __init__(self, parent_actor, hud, args=None, classes=None):
         """Constructor method"""
         self.sensor = None
         self.surface = None
@@ -25,7 +25,7 @@ class CameraManager(object):
         bound_y = 0.5 + self._parent.bounding_box.extent.y
         self.model_host = None
         self.model_port = None
-
+        self.classes = classes if classes is not None else KITTI_CLASSES
         self.count = 0
         self.STEP = 5
         self.conf = args.conf
@@ -202,7 +202,7 @@ class CameraManager(object):
                     try:
                         if not self.predictions:
                             raise Exception
-                        self.dets, array = predict(array, self.conf)
+                        self.dets, array = predict(array, self.conf, self.classes)
                     except:
                         pass
             else:
@@ -214,7 +214,7 @@ class CameraManager(object):
                         final_scores,
                         final_cls_inds,
                         conf=self.conf,
-                        class_names=KITTI_CLASSES,
+                        class_names=self.classes,
                     )
 
             array = array[:, :, ::-1]

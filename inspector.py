@@ -2,6 +2,8 @@ from DataSave import DataSave
 from SynchronyModel import SynchronyModel
 from config import cfg_from_yaml_file
 from data_utils import objects_filter
+from utils.custom_classes import *
+
 
 import logging
 import pygame
@@ -89,7 +91,15 @@ def main(args):
         )
 
         hud = HUD(image_width, image_height)
-        world = World(model.world, hud, args, model.player)
+
+        classes = {
+            "kitti": KITTI_CLASSES,
+            "custom": CUSTOM_CLASSES,
+            "coco": COCO_CLASSES,
+        }
+        cls = classes[args.classes] if args.classes in classes else classes["kitti"]
+
+        world = World(model.world, hud, args, model.player, cls)
 
         controller = KeyboardControl(world)
         if args.agent == "Basic":
@@ -239,7 +249,14 @@ if __name__ == "__main__":
         dest="conf",
         type=float,
     )
-
+    argparser.add_argument(
+        "-c",
+        "--classes",
+        type=str,
+        choices=["kitti", "coco", "custom"],
+        help="Choose one of the classes list (default: kitti) ",
+        default="kitti",
+    )
     args = argparser.parse_args()
 
     log_level = logging.DEBUG if args.debug else logging.INFO

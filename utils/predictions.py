@@ -191,10 +191,7 @@ def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
 
 # origin_img : cv2 image
-def predict(
-    origin_img,
-    conf=0.1,
-):
+def predict(origin_img, conf=0.1, classes=None):
     global session
     if session is None:
         try:
@@ -226,12 +223,12 @@ def predict(
             final_scores,
             final_cls_inds,
             conf=conf,
-            class_names=KITTI_CLASSES,
+            class_names=classes,
         )
     return (final_boxes, final_scores, final_cls_inds), origin_img
 
 
-def predict_remote(model_host, model_port, image, conf=0.6):
+def predict_remote(model_host, model_port, image, conf=0.6, classes=None):
 
     success, encoded_image = cv2.imencode(".png", image)
     result = None
@@ -252,7 +249,7 @@ def predict_remote(model_host, model_port, image, conf=0.6):
             result["prob"],
             indexes_from_coco,
             conf=conf,
-            class_names=KITTI_CLASSES,
+            class_names=classes,
         )
         return (result["bbox"], result["prob"], indexes_from_coco), image
     return None, image
