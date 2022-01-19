@@ -1,18 +1,30 @@
-
 import numpy as np
 
 import carla
 
-from .transform_utils import world_to_sensor, vehicle_bbox_to_world, vehicle_center_to_world
+from .transform_utils import (
+    world_to_sensor,
+    vehicle_bbox_to_world,
+    vehicle_center_to_world,
+)
 from .project_utils import project_points_to_camera
 from .label_utils import _baseLabel, _baseLabelList
+
 
 class CarlaLabel(_baseLabel):
     def __init__(self, x, y, z, h, w, l, ry):
         super(CarlaLabel, self).__init__(x, y, z, h, w, l, ry)
 
     def to_str(self):
-        return "%.2f %.2f %.2f %.2f %.2f %.2f %.2f" %(self.x, self.y, self.z, self.h, self.w, self.l, self.ry)
+        return "%.2f %.2f %.2f %.2f %.2f %.2f %.2f" % (
+            self.x,
+            self.y,
+            self.z,
+            self.h,
+            self.w,
+            self.l,
+            self.ry,
+        )
 
     @staticmethod
     def fromlist(list):
@@ -34,9 +46,9 @@ class CarlaLabelList(_baseLabelList):
         return _labellist
 
 
-
 def get_vehicles(world) -> list:
-    return list(world.get_actors().filter('vehicle.*'))
+    return list(world.get_actors().filter("vehicle.*"))
+
 
 def get_other_vehicles(world, vehicle) -> list:
     vehicles = get_vehicles(world)
@@ -47,6 +59,7 @@ def get_other_vehicles(world, vehicle) -> list:
             other_vehicles.append(v)
     return other_vehicles
 
+
 def get_visible_vehicles(world, sensor) -> list:
     vehicles = get_vehicles(world)
     ego = sensor.parent
@@ -55,6 +68,7 @@ def get_visible_vehicles(world, sensor) -> list:
         if vehicle.id != ego.id and get_visible_flag(world, sensor, vehicle):
             visible_vehicles.append(vehicle)
     return visible_vehicles
+
 
 def get_visible_flag(world, sensor, vehicle) -> bool:
     departure = sensor.get_location()
@@ -66,8 +80,7 @@ def get_visible_flag(world, sensor, vehicle) -> bool:
     return any(labels)
 
 
-
-def get_labels(world, sensor, visible_only = False) -> CarlaLabelList:
+def get_labels(world, sensor, visible_only=False) -> CarlaLabelList:
     ego = sensor.parent
     ego_heading = ego.get_transform().rotation.yaw
     if visible_only:
@@ -84,7 +97,9 @@ def get_labels(world, sensor, visible_only = False) -> CarlaLabelList:
         location = vehicle.get_location()
         other_vehicles_location.append(np.array([[location.x, location.y, location.z]]))
         extent = vehicle.bounding_box.extent
-        other_vehicles_hwl.append(np.array([[extent.z * 2, extent.y * 2, extent.x * 2]]))
+        other_vehicles_hwl.append(
+            np.array([[extent.z * 2, extent.y * 2, extent.x * 2]])
+        )
         heading = vehicle.get_transform().rotation.yaw
         other_vehicles_heading.append(np.array([[np.deg2rad(heading - ego_heading)]]))
     other_vehicles_location = np.concatenate(other_vehicles_location, axis=0)
@@ -92,12 +107,14 @@ def get_labels(world, sensor, visible_only = False) -> CarlaLabelList:
     other_vehicles_heading = np.concatenate(other_vehicles_heading, axis=0)
 
     other_vehicles_location = world_to_sensor(other_vehicles_location, sensor)
-    labels_xyzhwlry = np.concatenate([other_vehicles_location, other_vehicles_hwl, other_vehicles_heading], axis=1)
+    labels_xyzhwlry = np.concatenate(
+        [other_vehicles_location, other_vehicles_hwl, other_vehicles_heading], axis=1
+    )
     labels = CarlaLabelList.fromarray(labels_xyzhwlry)
     return labels
 
 
-def get_bboxes(world, camera, visible_only = False) -> np.array:
+def get_bboxes(world, camera, visible_only=False) -> np.array:
     ego = camera.parent
     if visible_only:
         other_vehicles = get_visible_vehicles(world, camera)
@@ -111,14 +128,21 @@ def get_bboxes(world, camera, visible_only = False) -> np.array:
         bbox3d = vehicle_bbox_to_world(vehicle)
         bbox2d = project_points_to_camera(bbox3d, camera)
         if all(bbox2d[:, 2] > 0):
-            corner2d = np.array([[
-                                    np.min(bbox2d[:, 0]), np.min(bbox2d[:, 1]),
-                                    np.max(bbox2d[:, 0]), np.max(bbox2d[:, 1])
-                                ]], dtype=np.dtype("float32"))
+            corner2d = np.array(
+                [
+                    [
+                        np.min(bbox2d[:, 0]),
+                        np.min(bbox2d[:, 1]),
+                        np.max(bbox2d[:, 0]),
+                        np.max(bbox2d[:, 1]),
+                    ]
+                ],
+                dtype=np.dtype("float32"),
+            )
         else:
-            corner2d = np.array([[
-                                    -1000.0, -1000.0, -1000.0, -1000.0
-                                ]], dtype=np.dtype("float32"))
+            corner2d = np.array(
+                [[-1000.0, -1000.0, -1000.0, -1000.0]], dtype=np.dtype("float32")
+            )
         bbox.append(corner2d)
     bbox = np.concatenate(bbox, axis=0)
     if len(bbox.shape) == 1:
@@ -126,25 +150,147 @@ def get_bboxes(world, camera, visible_only = False) -> np.array:
     else:
         return bbox
 
+
 def get_vehicle_fine_classification(vehicle) -> str:
     return "Car"
 
+
 def save_snapshot(path, world):
     vehicles = get_vehicles(world)
-    _snapshot = open(path, 'w')
-    print('saving snapshot to %s' %path)
+    _snapshot = open(path, "w")
+    print("saving snapshot to %s" % path)
     for vehicle in vehicles:
         location = vehicle.get_location()
         rotation = vehicle.get_transform().rotation
         extent = vehicle.bounding_box.extent
         velocity = vehicle.get_velocity()
         acceleration = vehicle.get_acceleration()
-        print('%d %s %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f' %(
-            vehicle.id, vehicle.type_id, 
-            location.x, location.y, location.z, 
-            extent.z*2, extent.y*2, extent.x*2, 
-            rotation.pitch, rotation.yaw, rotation.roll,
-            velocity.x, velocity.y, velocity.z,
-            acceleration.x, acceleration.y, acceleration.z
-        ), file=_snapshot)
+        print(
+            "%d %s %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f"
+            % (
+                vehicle.id,
+                vehicle.type_id,
+                location.x,
+                location.y,
+                location.z,
+                extent.z * 2,
+                extent.y * 2,
+                extent.x * 2,
+                rotation.pitch,
+                rotation.yaw,
+                rotation.roll,
+                velocity.x,
+                velocity.y,
+                velocity.z,
+                acceleration.x,
+                acceleration.y,
+                acceleration.z,
+            ),
+            file=_snapshot,
+        )
     _snapshot.close()
+
+
+def get_objects(world):
+    environment_objects = world.get_environment_objects(carla.CityObjectLabel.Any)
+    actors = world.get_actors()
+    return list(environment_objects), list(actors)
+
+
+def get_visible_objects(world, sensor) -> list:
+    env_obj, actors = get_objects(world)
+    ego = sensor.parent
+    visible_objects = []
+    for vehicle in actors:
+        if actors.id != ego.id and get_visible_flag(world, sensor, vehicle):
+            visible_objects.append(vehicle)
+
+    for obj in env_obj:
+        if get_visible_flag(world, sensor, obj):
+            visible_objects.append(vehicle)
+    return visible_objects
+
+
+def get_other_objects(world, sensor) -> list:
+    vehicles = get_vehicles(world)
+    ego = sensor.parent
+    visible_vehicles = []
+    for vehicle in vehicles:
+        if vehicle.id != ego.id and get_visible_flag(world, sensor, vehicle):
+            visible_vehicles.append(vehicle)
+    return visible_vehicles
+
+
+def get_labels_all(world, sensor, visible_only=True) -> CarlaLabelList:
+    ego = sensor.parent
+    ego_heading = ego.get_transform().rotation.yaw
+    if visible_only:
+        other_vehicles = get_visible_objects(world, sensor)
+    else:
+        other_vehicles = get_other_objects(world, ego)
+    if len(other_vehicles) == 0:
+        return CarlaLabelList()
+
+    other_vehicles_location = []
+    other_vehicles_hwl = []
+    other_vehicles_heading = []
+    for vehicle in other_vehicles:
+        location = vehicle.get_location()
+        other_vehicles_location.append(np.array([[location.x, location.y, location.z]]))
+        extent = vehicle.bounding_box.extent
+        other_vehicles_hwl.append(
+            np.array([[extent.z * 2, extent.y * 2, extent.x * 2]])
+        )
+        heading = vehicle.get_transform().rotation.yaw
+        other_vehicles_heading.append(np.array([[np.deg2rad(heading - ego_heading)]]))
+    other_vehicles_location = np.concatenate(other_vehicles_location, axis=0)
+    other_vehicles_hwl = np.concatenate(other_vehicles_hwl, axis=0)
+    other_vehicles_heading = np.concatenate(other_vehicles_heading, axis=0)
+
+    other_vehicles_location = world_to_sensor(other_vehicles_location, sensor)
+    labels_xyzhwlry = np.concatenate(
+        [other_vehicles_location, other_vehicles_hwl, other_vehicles_heading], axis=1
+    )
+    labels = CarlaLabelList.fromarray(labels_xyzhwlry)
+    return labels
+
+
+def get_bboxes_all(world, camera, visible_only=False) -> np.array:
+    ego = camera.parent
+    if visible_only:
+        other_vehicles = get_visible_objects(world, camera)
+    else:
+        other_vehicles = get_other_objects(world, ego)
+    if len(other_vehicles) == 0:
+        return np.array([[]])
+
+    bbox = []
+    for vehicle in other_vehicles:
+        bbox3d = vehicle_bbox_to_world(vehicle)
+        bbox2d = project_points_to_camera(bbox3d, camera)
+        if all(bbox2d[:, 2] > 0):
+            corner2d = np.array(
+                [
+                    [
+                        np.min(bbox2d[:, 0]),
+                        np.min(bbox2d[:, 1]),
+                        np.max(bbox2d[:, 0]),
+                        np.max(bbox2d[:, 1]),
+                    ]
+                ],
+                dtype=np.dtype("float32"),
+            )
+        else:
+            corner2d = np.array(
+                [[-1000.0, -1000.0, -1000.0, -1000.0]], dtype=np.dtype("float32")
+            )
+        bbox.append(corner2d)
+    bbox = np.concatenate(bbox, axis=0)
+    if len(bbox.shape) == 1:
+        return np.expand_dims(bbox, axis=0)
+    else:
+        return bbox
+
+
+def get_obj_fine_classification(label) -> str:
+    return str(label)

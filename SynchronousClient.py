@@ -98,7 +98,9 @@ class SynchronousClient:
         self.spectator = self.world.get_spectator()
         self.update_spectator()
 
-    def setup_camera(self, transform, log_dir="training/data", suffix=""):
+    def setup_camera(
+        self, transform, log_dir="training/data", suffix="", with_bbox=False
+    ):
         """transform: = [x, y, z, pitch, yaw, roll]"""
 
         camera_options = {
@@ -120,7 +122,7 @@ class SynchronousClient:
             self.ego,
             log_dir,
             suffix=suffix,
-            with_bbox=True,
+            with_bbox=with_bbox,
             **camera_options
         )
 
