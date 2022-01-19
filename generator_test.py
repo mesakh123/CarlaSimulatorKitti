@@ -11,20 +11,26 @@ from config import cfg_from_yaml_file
 def main(args):
     cfg = cfg_from_yaml_file("configs.yaml")
 
+    world = None
+    model = None
     try:
         model = SynchronousClient(cfg)
         tick = 0
         world = model.world
+
+        model.setup_cars()
+        model.setup_spectator()
 
         while True:
             tick += 1
             world.tick()
             model.update_spectator()
     finally:
-        vehicles = world.get_actors().filter("vehicle.*")
-        for vehicle in vehicles:
-            vehicle.destroy()
-        model.set_synchronous_mode(False)
+        if world:
+            vehicles = world.get_actors().filter("vehicle.*")
+            for vehicle in vehicles:
+                vehicle.destroy()
+            model.set_synchronous_mode(False)
 
 
 if __name__ == "__main__":
