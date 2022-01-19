@@ -16,12 +16,12 @@ class SynchronousClient:
         self.client.set_timeout(4.0)
         self.world = self.client.get_world()
         self.manager = self.client.get_trafficmanager(8000)
+
+        self.frames_per_second = 20
         self.set_synchronous_mode(True)
 
         self.number_of_cars = int(self.cfg["CARLA_CONFIG"]["NUM_OF_VEHICLES"])
         self.number_of_walkers = self(self.cfg["CARLA_CONFIG"]["NUM_OF_WALKERS"])
-
-        self.frames_per_second = 20
 
         self.ego = None
         self.spectator = None
