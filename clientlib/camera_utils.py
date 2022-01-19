@@ -17,7 +17,7 @@ class CustomCamera(_baseCustomSensor):
                        with_bbox: bool = False,
                        **camera_options):
         from .utils import make_dirs
-        self.tick = 0
+        self.tick = -1
         self.log_to = make_dirs(log_to)
         super(CustomCamera, self).__init__(world, attached, transform, 'sensor.camera.rgb', **camera_options)
         self.calibration = self.__init_calibration_matrix()

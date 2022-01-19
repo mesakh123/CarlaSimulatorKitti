@@ -86,9 +86,7 @@ def vehicle_bbox_to_world(vehicle, homography=False) -> np.array:
 
     bbox_cords = _create_bbox_points(vehicle)
     if not isinstance(vehicle, carla.EnvironmentObject):
-        bbox_transform = carla.Transform(
-            vehicle.bounding_box.location, vehicle.bounding_box.rotation
-        )
+        bbox_transform = carla.Transform(vehicle.bounding_box.location)
 
         bbox_vehicle_matrix = bbox_transform.get_matrix()
         vehicle_world_matrix = vehicle.get_transform().get_matrix()
@@ -100,9 +98,7 @@ def vehicle_bbox_to_world(vehicle, homography=False) -> np.array:
             return np.transpose(world_cords)[:, :3]
 
     else:
-        bbox_transform = carla.Transform(
-            vehicle.bounding_box.location, vehicle.bounding_box.rotation
-        )
+        bbox_transform = carla.Transform(vehicle.bounding_box.location)
 
         bbox_vehicle_matrix = bbox_transform.get_matrix()
         vehicle_world_matrix = vehicle.transform.get_matrix()

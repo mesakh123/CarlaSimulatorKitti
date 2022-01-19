@@ -24,6 +24,32 @@ class KittiLabel(_baseLabel):
         8: "Misc",
         0: "DontCare",
     }
+    __map_id_to_str_custom = {
+        0: 'None',
+        1: 'Buildings',
+        2: 'Fences',
+        3: 'Other',
+        4: 'Pedestrian',
+        5: 'Poles',
+        6: 'RoadLines',
+        7: 'Roads',
+        8: 'Sidewalks',
+        9: 'TrafficSigns',
+        10: 'Vegetation',
+        11: 'Vehicles',
+        12: 'Walls',
+        13: 'Sky',
+        14: 'Ground',
+        15: 'Bridge',
+        16: 'RailTrack',
+        17: 'GuardRail',
+        18: 'TrafficLight',
+        19: 'Static',
+        20: 'Dynamic',
+        21: 'Water',
+        22: 'Terrain'
+    }
+    
 
     def __init__(
         self,
@@ -47,7 +73,7 @@ class KittiLabel(_baseLabel):
         if isinstance(type, str):
             self.type = type
         else:
-            self.type = KittiLabel.type_id_to_str(type)
+            self.type = KittiLabel.type_id_to_str_custom(type)
         self.truncated = truncated
         self.occluded = int(occluded)
         self.alpha = alpha
@@ -96,6 +122,17 @@ class KittiLabel(_baseLabel):
             if value == s:
                 return key
         raise ValueError
+    
+    @staticmethod
+    def type_id_to_str_custom(id):
+        return KittiLabel.__map_id_to_str_custom[int(id)]
+    @staticmethod
+    def type_str_to_id_custom(s):
+        for key, value in KittiLabel.__map_id_to_str_custom.items():
+            if value == s:
+                return key
+        raise ValueError
+    
 
     @staticmethod
     def fromannotation(annotation):
@@ -221,18 +258,34 @@ def get_kitti_label(world, camera) -> KittiLabelList:
         get_obj_fine_classification,
     )
 
-    labels = get_labels_all(world, camera, visible_only=True)
-    bboxes = get_bboxes(world, camera, visible_only=True)
-    vehicles = get_visible_vehicles(world, camera)
+    test = False
+    if test:
+        print("Get labels all started")
+        labels = get_labels_all(world, camera, visible_only=True)
+        print("Get labels all finished")
+        print("Get bboxes all started")
+        bboxes = get_bboxes_all(world, camera, visible_only=True)
+        print("Get bboxes all finished")
+        vehicles = get_visible_objects(world, camera)
+
+    else:
+        print("Get labels all started")
+        labels = get_labels(world, camera, visible_only=True)
+        print("Get labels all finished")
+        print("Get bboxes all started")
+        bboxes = get_bboxes(world, camera, visible_only=True)
+        print("Get bboxes all finished")
+        vehicles = get_visible_vehicles(world, camera)
     kittilabels = []
     for (vehicle, label, bbox) in zip(vehicles, labels, bboxes):
-        v_type = get_obj_fine_classification(vehicle)
+        v_type = get_obj_fine_classification(vehicle) if  get_obj_fine_classification(vehicle) else "None"
+        print("Vtype {} {} ".format(v_type, type(v_type)))
         tru = get_truncated(bbox, camera.image_height, camera.image_width)
         occ = get_occluded()
         alp = get_alpha(label.y, label.x, label.ry)
         kitti_label = [
             [
-                KittiLabel.type_str_to_id(v_type),
+                KittiLabel.type_str_to_id_custom(str(v_type)),
                 tru,
                 occ,
                 alp,

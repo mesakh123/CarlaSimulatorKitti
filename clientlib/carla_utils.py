@@ -206,8 +206,8 @@ def get_visible_objects(world, sensor) -> list:
             visible_objects.append(actor)
 
     for obj in env_obj:
-        if get_visible_flag(world, sensor, obj):
-            visible_objects.append(obj)
+        #if get_visible_flag(world, sensor, obj):
+        visible_objects.append(obj)
     return visible_objects
 
 
@@ -244,7 +244,11 @@ def get_labels_all(world, sensor, visible_only=True) -> CarlaLabelList:
         other_vehicles_hwl.append(
             np.array([[extent.z * 2, extent.y * 2, extent.x * 2]])
         )
-        heading = vehicle.get_transform().rotation.yaw
+        if isinstance(vehicle, carla.EnvironmentObject):
+            heading = vehicle.transform.rotation.yaw
+        else:
+            heading = vehicle.get_transform().rotation.yaw
+        
         other_vehicles_heading.append(np.array([[np.deg2rad(heading - ego_heading)]]))
     other_vehicles_location = np.concatenate(other_vehicles_location, axis=0)
     other_vehicles_hwl = np.concatenate(other_vehicles_hwl, axis=0)
@@ -302,5 +306,5 @@ def get_obj_fine_classification(obj) -> str:
         if obj.type_id.find("walker") is not -1:
             return "Pedestrian"
         if obj.type_id.find("vehicle") is not -1:
-            return "Car"
-        return None
+            return "Vehicles"
+        return "None"

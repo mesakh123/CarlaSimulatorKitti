@@ -32,7 +32,7 @@ def main(args):
                 generate_kitti_label_file(
                     ("%06d.txt" % label_count), model.world, front
                 )
-            label_count += 1
+                label_count += 1
     finally:
         if world:
             vehicles = world.get_actors().filter("vehicle.*")
