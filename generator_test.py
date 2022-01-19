@@ -19,7 +19,6 @@ def main(args):
         tick = 0
 
         model.setup_cars()
-        model.setup_spectator()
 
         label_count = 0
 
