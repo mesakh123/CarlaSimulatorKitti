@@ -295,5 +295,12 @@ def get_bboxes_all(world, camera, visible_only=False) -> np.array:
         return bbox
 
 
-def get_obj_fine_classification(label) -> str:
-    return str(label)
+def get_obj_fine_classification(obj) -> str:
+    if isinstance(obj, carla.EnvironmentObject):
+        return obj.type
+    else:
+        if obj.type_id.find("walker") is not -1:
+            return "Pedestrian"
+        if obj.type_id.find("vehicle") is not -1:
+            return "Car"
+        return None
