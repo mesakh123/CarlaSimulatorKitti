@@ -208,6 +208,7 @@ class SynchronousClient:
         self.set_actors_route()
         self.set_ego()
         self.sensor_listen()
+        self.setup_spectator()
 
     def set_actors_route(self):
         self.manager.set_global_distance_to_leading_vehicle(1.0)
