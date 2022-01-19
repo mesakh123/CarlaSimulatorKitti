@@ -226,7 +226,8 @@ def get_kitti_label(world, camera) -> KittiLabelList:
     vehicles = get_visible_vehicles(world, camera)
     kittilabels = []
     for (vehicle, label, bbox) in zip(vehicles, labels, bboxes):
-        v_type = get_obj_fine_classification(vehicle)
+        v_type = get_vehicle_fine_classification(vehicle)
+        print("test ", get_obj_fine_classification(vehicle))
         tru = get_truncated(bbox, camera.image_height, camera.image_width)
         occ = get_occluded()
         alp = get_alpha(label.y, label.x, label.ry)
