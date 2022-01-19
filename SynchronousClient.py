@@ -50,8 +50,15 @@ class SynchronousClient:
         location = random.sample(
             self.world.get_map().get_spawn_points(), self.number_of_cars
         )
-        self.ego = self.world.spawn_actor(car_bps[0], location[0])
-        self.ego.set_autopilot(True, self.manager.get_port())
+        success = False
+        while not success:
+            try:
+                self.ego = self.world.spawn_actor(car_bps[0], location[0])
+                self.ego.set_autopilot(True, self.manager.get_port())
+                success = True
+            except:
+                pass
+
         for i in range(1, self.number_of_cars):
             current_car = self.world.spawn_actor(car_bp_sample[i], location[i])
             current_car.set_autopilot(True, self.manager.get_port())
