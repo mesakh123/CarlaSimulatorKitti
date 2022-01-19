@@ -1,3 +1,33 @@
+CUSTOM_CLASSES = (
+    "Buildings",
+    "Car",
+    "Dynamic",
+    "Fences",
+    "NONE",
+    "Other",
+    "Pedestrian",
+    "Poles",
+    "Sidewalks",
+    "Static",
+    "TrafficLight",
+    "TrafficSigns",
+    "Vegetation",
+    "Vehicles",
+    "Walls",
+)
+
+KITTI_CLASSES = (
+    "Car",
+    "Cyclist",
+    "DontCare",
+    "Misc",
+    "Pedestrian",
+    "Person_sittin",
+    "Tram",
+    "Truck",
+    "Van",
+)
+
 COCO_CLASSES = [
     "person",
     "bicycle",
@@ -80,15 +110,3 @@ COCO_CLASSES = [
     "hair drier",
     "toothbrush",
 ]
-
-KITTI_CLASSES = (
-    "Car",
-    "Cyclist",
-    "DontCare",
-    "Misc",
-    "Pedestrian",
-    "Person_sittin",
-    "Tram",
-    "Truck",
-    "Van",
-)

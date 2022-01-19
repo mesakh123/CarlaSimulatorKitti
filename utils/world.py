@@ -18,7 +18,7 @@ from .global_functions import *
 class World(object):
     """Class representing the surrounding environment"""
 
-    def __init__(self, carla_world, hud, args, remote_player: None):
+    def __init__(self, carla_world, hud, args, remote_player: None, classes: None):
         """Constructor method"""
         self._args = args
         self.world = carla_world
@@ -40,6 +40,8 @@ class World(object):
         self._weather_presets = find_weather_presets()
         self._weather_index = 0
         self._actor_filter = args.filter
+        self.classes = classes
+
         self.restart(args, remote_player)
         self.world.on_tick(hud.on_world_tick)
         self.recording_enabled = False
@@ -97,7 +99,7 @@ class World(object):
         self.collision_sensor = CollisionSensor(self.player, self.hud)
         self.lane_invasion_sensor = LaneInvasionSensor(self.player, self.hud)
         self.gnss_sensor = GnssSensor(self.player)
-        self.camera_manager = CameraManager(self.player, self.hud, args)
+        self.camera_manager = CameraManager(self.player, self.hud, args, self.classes)
         self.camera_manager.transform_index = cam_pos_id
         self.camera_manager.set_sensor(cam_index, notify=False)
         actor_type = get_actor_display_name(self.player)
