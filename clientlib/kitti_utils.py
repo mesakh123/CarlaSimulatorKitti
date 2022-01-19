@@ -246,6 +246,7 @@ def get_kitti_label(world, camera) -> KittiLabelList:
 
 
 def generate_kitti_label_file(path, world, camera) -> None:
+    os.makedirs("training/labels", exist_ok=True)
     path = os.path.join("training/labels", path)
     kittilabels = get_kitti_label(world, camera)
     _label = open(path, "w")
