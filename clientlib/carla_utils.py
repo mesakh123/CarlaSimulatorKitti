@@ -201,13 +201,13 @@ def get_visible_objects(world, sensor) -> list:
     env_obj, actors = get_objects(world)
     ego = sensor.parent
     visible_objects = []
-    for vehicle in actors:
-        if actors.id != ego.id and get_visible_flag(world, sensor, vehicle):
-            visible_objects.append(vehicle)
+    for actor in actors:
+        if actor.id != ego.id and get_visible_flag(world, sensor, actor):
+            visible_objects.append(actor)
 
     for obj in env_obj:
         if get_visible_flag(world, sensor, obj):
-            visible_objects.append(vehicle)
+            visible_objects.append(obj)
     return visible_objects
 
 
@@ -235,7 +235,10 @@ def get_labels_all(world, sensor, visible_only=True) -> CarlaLabelList:
     other_vehicles_hwl = []
     other_vehicles_heading = []
     for vehicle in other_vehicles:
-        location = vehicle.get_location()
+        try:
+            location = vehicle.get_location()
+        except:
+            location = vehicle.transform.location
         other_vehicles_location.append(np.array([[location.x, location.y, location.z]]))
         extent = vehicle.bounding_box.extent
         other_vehicles_hwl.append(
