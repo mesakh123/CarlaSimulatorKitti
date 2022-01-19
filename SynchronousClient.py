@@ -280,7 +280,7 @@ class SynchronousClient:
                     trans_cfg["rotation"][2],
                 ),
             )
-            sensor = self.world.spawn_actor(sensor_bp, transform, attach_to=agent)
+            sensor = self.world.spawn_actor(sensor_bp, transform, attach_to=self.ego)
             self.actors["sensors"][self.ego].append(sensor)
         self.world.tick()
 
