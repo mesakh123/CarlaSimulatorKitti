@@ -1,5 +1,6 @@
 from config import config_to_trans
 from export_utils import *
+import time
 
 
 class DataSave:
@@ -55,7 +56,7 @@ class DataSave:
         #    num_existing_data_files))
         return num_existing_data_files
 
-    def save_training_files(self, data):
+    def save_training_files(self, data, only_kitti=True):
 
         lidar_fname = self.LIDAR_PATH.format(self.captured_frame_no)
         kitti_label_fname = self.KITTI_LABEL_PATH.format(self.captured_frame_no)
@@ -75,6 +76,9 @@ class DataSave:
             save_ref_files(self.OUTPUT_FOLDER, self.captured_frame_no)
             save_image_data(img_fname, dt["sensor_data"][0])
             save_label_data(kitti_label_fname, dt["kitti_datapoints"])
+            if only_kitti:
+                time.sleep(2)
+                continue
             save_label_data(carla_label_fname, dt["carla_datapoints"])
             save_calibration_matrices(
                 [camera_transform, lidar_transform], calib_filename, dt["intrinsic"]
