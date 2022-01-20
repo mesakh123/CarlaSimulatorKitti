@@ -34,7 +34,7 @@ class SynchronousClient:
 
         self.fov = 90
         self.sensor_tick = 0.1
-        self.tick = -1
+        self.tick = 0
 
         self.actors = {"non_agents": [], "walkers": [], "agents": [], "sensors": {}}
         self.data = {"sensor_data": {}, "environment_data": None}  # 记录每一帧的数据
