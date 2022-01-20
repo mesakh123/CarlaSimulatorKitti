@@ -76,9 +76,6 @@ class DataSave:
             save_ref_files(self.OUTPUT_FOLDER, self.captured_frame_no)
             save_image_data(img_fname, dt["sensor_data"][0])
             save_label_data(kitti_label_fname, dt["kitti_datapoints"])
-            if only_kitti:
-                time.sleep(2)
-                continue
             save_label_data(carla_label_fname, dt["carla_datapoints"])
             save_calibration_matrices(
                 [camera_transform, lidar_transform], calib_filename, dt["intrinsic"]
