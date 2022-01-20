@@ -29,8 +29,8 @@ def main(args):
             tick += 1
             model.world.tick()
             model.update_spectator()
+            front.save_data()
             if tick % (model.sensor_tick // (1 / model.frames_per_second)) == 0:
-                front.save_data()
                 generate_kitti_label_file(
                     ("%06d.txt" % label_count), model.world, front
                 )
