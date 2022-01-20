@@ -750,10 +750,22 @@ class SynchronyModel(object):
     def _span_player(self):
         """create our target vehicle"""
         my_vehicle_bp = random.choice(self.blueprint_library.filter("vehicle.*"))
-        location = carla.Location(190, 10, 0.5)
-        rotation = carla.Rotation(0, 0, 0)
-        transform_vehicle = carla.Transform(location, rotation)
-        my_vehicle = self.world.spawn_actor(my_vehicle_bp, transform_vehicle)
+
+        success = False
+        my_vehicle = None
+        while not success:
+            try:
+                # location = carla.Location(70, 13, 0.5)
+                # rotation = carla.Rotation(0, 180, 0)
+                # transform_vehicle = carla.Transform(location, rotation)
+                transform_vehicle = random.choice(
+                    self.world.get_map().get_spawn_points()
+                )
+                my_vehicle = self.world.spawn_actor(my_vehicle_bp, transform_vehicle)
+                success = True
+            except:
+                pass
+
         k, my_camera = self._span_sensor(my_vehicle)
         self.actor_list.append(my_vehicle)
         self.player = my_vehicle
