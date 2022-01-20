@@ -24,6 +24,7 @@ import random
 import queue
 import numpy as np
 from math import pi
+from typing import List
 
 import image_converter
 
@@ -646,9 +647,12 @@ def save_kitti_data(filename, datapoints):
         f.write(out_str)
     logging.info("Wrote kitti data to %s", filename)
 
+
 def save_image_data(filename, image):
     logging.info("Wrote image data to %s", filename)
     image.save_to_disk(filename)
+
+
 class SynchronyModel(object):
     def __init__(self):
         (
