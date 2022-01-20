@@ -206,7 +206,7 @@ def get_visible_objects(world, sensor) -> list:
             visible_objects.append(actor)
 
     for obj in env_obj:
-        #if get_visible_flag(world, sensor, obj):
+        # if get_visible_flag(world, sensor, obj):
         visible_objects.append(obj)
     return visible_objects
 
@@ -248,7 +248,7 @@ def get_labels_all(world, sensor, visible_only=True) -> CarlaLabelList:
             heading = vehicle.transform.rotation.yaw
         else:
             heading = vehicle.get_transform().rotation.yaw
-        
+
         other_vehicles_heading.append(np.array([[np.deg2rad(heading - ego_heading)]]))
     other_vehicles_location = np.concatenate(other_vehicles_location, axis=0)
     other_vehicles_hwl = np.concatenate(other_vehicles_hwl, axis=0)
@@ -288,9 +288,7 @@ def get_bboxes_all(world, camera, visible_only=False) -> np.array:
                 dtype=np.dtype("float32"),
             )
         else:
-            corner2d = np.array(
-                [[-1000.0, -1000.0, -1000.0, -1000.0]], dtype=np.dtype("float32")
-            )
+            continue
         bbox.append(corner2d)
     bbox = np.concatenate(bbox, axis=0)
     if len(bbox.shape) == 1:
