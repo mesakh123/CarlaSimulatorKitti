@@ -64,7 +64,7 @@ def main(args):
     global save, model, dtsave, tasks, step, STEP
     cfg = cfg_from_yaml_file("configs.yaml")
     model = SynchronyModel(cfg, args)
-    dtsave = DataSave(cfg)
+    dtsave = DataSave(cfg, args.kitti_only)
 
     pygame.init()
     pygame.font.init()
@@ -218,6 +218,12 @@ if __name__ == "__main__":
         action="store_true",
         dest="predict",
         help="Predict images on pygame (default: False)",
+    )
+    argparser.add_argument(
+        "--kitti-only",
+        action="store_true",
+        dest="kitti-only",
+        help="Only save KIITTI dataset format (images and KITTI labels)",
     )
     argparser.add_argument(
         "-a",
