@@ -19,7 +19,6 @@ except IndexError:
 import carla
 import logging
 import math
-import pygame
 import random
 import queue
 import numpy as np
@@ -1021,51 +1020,12 @@ class SynchronyModel(object):
         return image, datapoints
 
 
-def draw_image(surface, image, blend=False):
-    # array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
-    # array = np.reshape(array, (image.height, image.width, 4))
-    # array = array[:, :, :3]
-    # array = array[:, :, ::-1]
-    array = image[:, :, ::-1]
-    image_surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
-    if blend:
-        image_surface.set_alpha(100)
-    surface.blit(image_surface, (0, 0))
-
-
-def should_quit():
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            return True
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_ESCAPE:
-                return True
-    return False
-
-
-def get_font():
-    fonts = [x for x in pygame.font.get_fonts()]
-    default_font = "ubuntumono"
-    font = default_font if default_font in fonts else fonts[0]
-    font = pygame.font.match_font(font)
-    return pygame.font.Font(font, 14)
-
-
 def main():
-    pygame.init()
-    display = pygame.display.set_mode(
-        (WINDOW_WIDTH, WINDOW_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF
-    )
-    font = get_font()
-    clock = pygame.time.Clock()
 
     with SynchronyModel() as sync_mode:
         try:
             step = 1
             while True:
-                if should_quit():
-                    break
-                clock.tick()
                 (
                     snapshot,
                     sync_mode.main_image,
@@ -1097,24 +1057,10 @@ def main():
                     sync_mode.captured_frame_no += 1
 
                 step = step + 1
-                fps = round(1.0 / snapshot.timestamp.delta_seconds)
-                draw_image(display, image)
-                display.blit(
-                    font.render(
-                        "% 5d FPS (real)" % clock.get_fps(), True, (255, 255, 255)
-                    ),
-                    (8, 10),
-                )
-                display.blit(
-                    font.render("% 5d FPS (simulated)" % fps, True, (255, 255, 255)),
-                    (8, 28),
-                )
-                pygame.display.flip()
         finally:
             print("destroying actors.")
             for actor in sync_mode.actor_list:
                 actor.destroy()
-            pygame.quit()
             print("done.")
 
 
