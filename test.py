@@ -748,7 +748,9 @@ class SynchronyModel(object):
 
     def _span_player(self):
         """create our target vehicle"""
-        my_vehicle_bp = random.choice(self.blueprint_library.filter("vehicle.*"))
+        my_vehicle_bp = random.choice(
+            self.blueprint_library.filter("vehicle.lincoln.*")
+        )
 
         success = False
         my_vehicle = None
@@ -764,7 +766,7 @@ class SynchronyModel(object):
                 success = True
             except:
                 pass
-
+        my_vehicle.set_autopilot(True, self.traffic_manager.get_port())
         k, my_camera = self._span_sensor(my_vehicle)
         self.actor_list.append(my_vehicle)
         self.player = my_vehicle
@@ -792,7 +794,8 @@ class SynchronyModel(object):
         lidar_bp.set_attribute("channels", "32")
 
         transform_sensor = carla.Transform(
-            carla.Location(x=0, y=0, z=CAMERA_HEIGHT_POS)
+            carla.Location(x=0, y=0, z=CAMERA_HEIGHT_POS),
+            carla.Rotation(0, 0, 0),
         )
 
         my_camera = self.world.spawn_actor(
@@ -802,7 +805,7 @@ class SynchronyModel(object):
             camera_d_bp, transform_sensor, attach_to=player
         )
         my_lidar = self.world.spawn_actor(lidar_bp, transform_sensor, attach_to=player)
-
+        self.world.tick()
         self.actor_list.append(my_camera)
         self.actor_list.append(my_camera_d)
         self.actor_list.append(my_lidar)
@@ -824,10 +827,6 @@ class SynchronyModel(object):
         blueprints = [
             x for x in blueprints if int(x.get_attribute("number_of_wheels")) == 4
         ]
-        blueprints = [x for x in blueprints if not x.id.endswith("isetta")]
-        blueprints = [x for x in blueprints if not x.id.endswith("carlacola")]
-        blueprints = [x for x in blueprints if not x.id.endswith("cybertruck")]
-        blueprints = [x for x in blueprints if not x.id.endswith("t2")]
         blueprints = sorted(blueprints, key=lambda bp: bp.id)
 
         spawn_points = self.world.get_map().get_spawn_points()
@@ -877,7 +876,6 @@ class SynchronyModel(object):
             i.set_autopilot(True, self.traffic_manager.get_port())
 
         blueprintsWalkers = self.world.get_blueprint_library().filter(FILTERW)
-        percentagePedestriansRunning = 0.0  # how many pedestrians will run
         percentagePedestriansCrossing = (
             0.0  # how many pedestrians will walk through the road
         )
@@ -897,21 +895,6 @@ class SynchronyModel(object):
             # set as not invincible
             if walker_bp.has_attribute("is_invincible"):
                 walker_bp.set_attribute("is_invincible", "false")
-            # set the max speed
-            if walker_bp.has_attribute("speed"):
-                if random.random() > percentagePedestriansRunning:
-                    # walking
-                    walker_speed.append(
-                        walker_bp.get_attribute("speed").recommended_values[1]
-                    )
-                else:
-                    # running
-                    walker_speed.append(
-                        walker_bp.get_attribute("speed").recommended_values[2]
-                    )
-            else:
-                print("Walker has no speed")
-                walker_speed.append(0.0)
             batch.append(SpawnActor(walker_bp, spawn_point))
         results = self.client.apply_batch_sync(batch, True)
         walker_speed2 = []
