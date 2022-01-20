@@ -23,6 +23,7 @@ import pygame
 import random
 import queue
 import numpy as np
+from math import pi
 
 import image_converter
 
@@ -393,6 +394,43 @@ class KittiDescriptor:
         )
 
 
+def get_line(x1, y1, x2, y2):
+    x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+    # print("Calculating line from {},{} to {},{}".format(x1,y1,x2,y2))
+    points = []
+    issteep = abs(y2 - y1) > abs(x2 - x1)
+    if issteep:
+        x1, y1 = y1, x1
+        x2, y2 = y2, x2
+    rev = False
+    if x1 > x2:
+        x1, x2 = x2, x1
+        y1, y2 = y2, y1
+        rev = True
+    deltax = x2 - x1
+    deltay = abs(y2 - y1)
+    error = int(deltax / 2)
+    y = y1
+    ystep = None
+    if y1 < y2:
+        ystep = 1
+    else:
+        ystep = -1
+    for x in range(x1, x2 + 1):
+        if issteep:
+            points.append((y, x))
+        else:
+            points.append((x, y))
+        error -= deltay
+        if error < 0:
+            y += ystep
+            error += deltax
+    # Reverse the list if the coordinates were reversed
+    if rev:
+        points.reverse()
+    return points
+
+
 def create_kitti_datapoint(
     agent,
     intrinsic_mat,
@@ -602,6 +640,15 @@ def calc_bbox2d_area(bbox_2d):
     return (ymax - ymin) * (xmax - xmin)
 
 
+def save_kitti_data(filename, datapoints):
+    with open(filename, "w") as f:
+        out_str = "\n".join([str(point) for point in datapoints if point])
+        f.write(out_str)
+    logging.info("Wrote kitti data to %s", filename)
+
+def save_image_data(filename, image):
+    logging.info("Wrote image data to %s", filename)
+    image.save_to_disk(filename)
 class SynchronyModel(object):
     def __init__(self):
         (
