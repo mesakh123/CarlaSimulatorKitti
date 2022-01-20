@@ -8,6 +8,8 @@ from SynchronousClient import SynchronousClient
 from config import cfg_from_yaml_file
 from clientlib.kitti_utils import generate_kitti_label_file
 
+import time
+
 
 def main(args):
     cfg = cfg_from_yaml_file("configs.yaml")
@@ -33,6 +35,7 @@ def main(args):
                     ("%06d.txt" % label_count), model.world, front
                 )
                 label_count += 1
+                time.sleep(1)
     finally:
         if world:
             vehicles = world.get_actors().filter("vehicle.*")

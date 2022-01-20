@@ -25,31 +25,30 @@ class KittiLabel(_baseLabel):
         0: "DontCare",
     }
     __map_id_to_str_custom = {
-        0: 'None',
-        1: 'Buildings',
-        2: 'Fences',
-        3: 'Other',
-        4: 'Pedestrian',
-        5: 'Poles',
-        6: 'RoadLines',
-        7: 'Roads',
-        8: 'Sidewalks',
-        9: 'TrafficSigns',
-        10: 'Vegetation',
-        11: 'Vehicles',
-        12: 'Walls',
-        13: 'Sky',
-        14: 'Ground',
-        15: 'Bridge',
-        16: 'RailTrack',
-        17: 'GuardRail',
-        18: 'TrafficLight',
-        19: 'Static',
-        20: 'Dynamic',
-        21: 'Water',
-        22: 'Terrain'
+        0: "None",
+        1: "Buildings",
+        2: "Fences",
+        3: "Other",
+        4: "Pedestrian",
+        5: "Poles",
+        6: "RoadLines",
+        7: "Roads",
+        8: "Sidewalks",
+        9: "TrafficSigns",
+        10: "Vegetation",
+        11: "Vehicles",
+        12: "Walls",
+        13: "Sky",
+        14: "Ground",
+        15: "Bridge",
+        16: "RailTrack",
+        17: "GuardRail",
+        18: "TrafficLight",
+        19: "Static",
+        20: "Dynamic",
+        21: "Water",
+        22: "Terrain",
     }
-    
 
     def __init__(
         self,
@@ -122,17 +121,17 @@ class KittiLabel(_baseLabel):
             if value == s:
                 return key
         raise ValueError
-    
+
     @staticmethod
     def type_id_to_str_custom(id):
         return KittiLabel.__map_id_to_str_custom[int(id)]
+
     @staticmethod
     def type_str_to_id_custom(s):
         for key, value in KittiLabel.__map_id_to_str_custom.items():
             if value == s:
                 return key
         raise ValueError
-    
 
     @staticmethod
     def fromannotation(annotation):
@@ -278,8 +277,11 @@ def get_kitti_label(world, camera) -> KittiLabelList:
         vehicles = get_visible_vehicles(world, camera)
     kittilabels = []
     for (vehicle, label, bbox) in zip(vehicles, labels, bboxes):
-        v_type = get_obj_fine_classification(vehicle) if  get_obj_fine_classification(vehicle) else "None"
-        print("Vtype {} {} ".format(v_type, type(v_type)))
+        v_type = (
+            get_obj_fine_classification(vehicle)
+            if get_obj_fine_classification(vehicle)
+            else "None"
+        )
         tru = get_truncated(bbox, camera.image_height, camera.image_width)
         occ = get_occluded()
         alp = get_alpha(label.y, label.x, label.ry)
