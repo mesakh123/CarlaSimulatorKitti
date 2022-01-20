@@ -749,9 +749,7 @@ class SynchronyModel(object):
 
     def _span_player(self):
         """create our target vehicle"""
-        my_vehicle_bp = random.choice(
-            self.blueprint_library.filter("vehicle.lincoln.mkz2017")
-        )
+        my_vehicle_bp = random.choice(self.blueprint_library.filter("vehicle.*"))
         location = carla.Location(190, 10, 0.5)
         rotation = carla.Rotation(0, 0, 0)
         transform_vehicle = carla.Transform(location, rotation)
