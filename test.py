@@ -890,11 +890,27 @@ class SynchronyModel(object):
         # 2. we spawn the walker object
         batch = []
         walker_speed = []
+        percentagePedestriansRunning = 0.3
         for spawn_point in spawn_points:
             walker_bp = random.choice(blueprintsWalkers)
             # set as not invincible
             if walker_bp.has_attribute("is_invincible"):
                 walker_bp.set_attribute("is_invincible", "false")
+            # set the max speed
+            if walker_bp.has_attribute("speed"):
+                if random.random() > percentagePedestriansRunning:
+                    # walking
+                    walker_speed.append(
+                        walker_bp.get_attribute("speed").recommended_values[1]
+                    )
+                else:
+                    # running
+                    walker_speed.append(
+                        walker_bp.get_attribute("speed").recommended_values[2]
+                    )
+            else:
+                print("Walker has no speed")
+                walker_speed.append(0.0)
             batch.append(SpawnActor(walker_bp, spawn_point))
         results = self.client.apply_batch_sync(batch, True)
         walker_speed2 = []
