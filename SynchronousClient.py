@@ -151,6 +151,7 @@ class SynchronousClient:
 
     def setup_cars(self):
         blueprints = self.world.get_blueprint_library().filter("vehicle.*")
+        blueprints = sorted(blueprints, key=lambda bp: bp.id)
         spawn_points = self.world.get_map().get_spawn_points()
 
         batch = []
