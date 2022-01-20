@@ -21,7 +21,7 @@ class DataSave:
         PHASE = "training"
         self.OUTPUT_FOLDER = os.path.join(root_path, PHASE)
         folders = ["calib", "data", "labels", "carla_label", "velodyne"]
-        if self.kitii_only:
+        if self.kitti_only:
             folders = ["data", "labels"]
 
         for folder in folders:
