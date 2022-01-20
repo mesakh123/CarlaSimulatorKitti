@@ -22,7 +22,7 @@ def main(args):
 
         model.setup_cars()
 
-        label_count = 0
+        label_count = 1
 
         front = model.setup_camera([0.0, 0.0, 2.0, 0.0, 0.0, 0.0])
         while True:
