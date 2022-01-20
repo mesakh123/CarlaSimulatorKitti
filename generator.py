@@ -35,7 +35,7 @@ if __name__ == "__main__":
     argparser.add_argument(
         "--kitti-only",
         action="store_true",
-        dest="kitti-only",
+        dest="kitti_only",
         help="Only save KIITTI dataset format (images and KITTI labels)",
     )
     args = argparser.parse_args()
