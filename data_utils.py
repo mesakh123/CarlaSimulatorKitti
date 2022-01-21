@@ -209,32 +209,6 @@ def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, ob
     return vertices_pos2d
 
 
-def bbox_2d_from_agent_test(
-    intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp
-):
-    bbox_cords = vertices_from_extension_test(obj_bbox.extent)
-    bbox_matrix = None
-    if obj_tp == 1 or obj_tp == 0:
-        bbox_transform = carla.Transform(obj_bbox.location)
-        bbox_matrix = get_matrix(bbox_transform)
-    else:
-        box_location = carla.Location(
-            obj_bbox.location.x - obj_transform.location.x,
-            obj_bbox.location.y - obj_transform.location.y,
-            obj_bbox.location.z - obj_transform.location.z,
-        )
-        box_rotation = obj_bbox.rotation
-        bbox_transform = carla.Transform(box_location, box_rotation)
-        # bbox = transform_points(bbox_transform, bbox)
-    obj_word_matrix = get_matrix(obj_transform)
-    bb_world_matrix = np.dot(obj_word_matrix, bbox_matrix)
-    vertices_pos2d = np.dot(bb_world_matrix, np.transpose(bbox_cords))
-    vertices_pos2d = vertices_to_2d_coords_test(
-        vertices_pos2d, intrinsic_mat, extrinsic_mat
-    )
-    return vertices_pos2d
-
-
 def vertices_from_extension(ext):
     """以自身为原点的八个点的坐标"""
     return np.array(
@@ -249,51 +223,6 @@ def vertices_from_extension(ext):
             [-ext.x, -ext.y, -ext.z],  # Bottom right back
         ]
     )
-
-
-def vertices_from_extension_test(extent):
-    """
-    Returns 3D bounding box for a vehicle.
-    """
-    cords = np.zeros((8, 4))
-    cords[0, :] = np.array([extent.x, extent.y, -extent.z, 1])
-    cords[1, :] = np.array([-extent.x, extent.y, -extent.z, 1])
-    cords[2, :] = np.array([-extent.x, -extent.y, -extent.z, 1])
-    cords[3, :] = np.array([extent.x, -extent.y, -extent.z, 1])
-    cords[4, :] = np.array([extent.x, extent.y, extent.z, 1])
-    cords[5, :] = np.array([-extent.x, extent.y, extent.z, 1])
-    cords[6, :] = np.array([-extent.x, -extent.y, extent.z, 1])
-    cords[7, :] = np.array([extent.x, -extent.y, extent.z, 1])
-    return cords
-
-
-def get_matrix(transform):
-    """
-    Creates matrix from carla transform.
-    """
-
-    rotation = transform.rotation
-    location = transform.location
-    c_y = np.cos(np.radians(rotation.yaw))
-    s_y = np.sin(np.radians(rotation.yaw))
-    c_r = np.cos(np.radians(rotation.roll))
-    s_r = np.sin(np.radians(rotation.roll))
-    c_p = np.cos(np.radians(rotation.pitch))
-    s_p = np.sin(np.radians(rotation.pitch))
-    matrix = np.matrix(np.identity(4))
-    matrix[0, 3] = location.x
-    matrix[1, 3] = location.y
-    matrix[2, 3] = location.z
-    matrix[0, 0] = c_p * c_y
-    matrix[0, 1] = c_y * s_p * s_r - s_y * c_r
-    matrix[0, 2] = -c_y * s_p * c_r - s_y * s_r
-    matrix[1, 0] = s_y * c_p
-    matrix[1, 1] = s_y * s_p * s_r + c_y * c_r
-    matrix[1, 2] = -s_y * s_p * c_r + c_y * s_r
-    matrix[2, 0] = s_p
-    matrix[2, 1] = -c_p * s_r
-    matrix[2, 2] = c_p * c_r
-    return matrix
 
 
 def transform_points(transform, points):
@@ -318,25 +247,6 @@ def vertices_to_2d_coords(bbox, intrinsic_mat, extrinsic_mat):
         transformed_3d_pos = proj_to_camera(pos_vector, extrinsic_mat)
         # 将点的相机坐标转换为二维图片的坐标
         pos2d = proj_to_2d(transformed_3d_pos, intrinsic_mat)
-        # 点实际的深度
-        vertex_depth = pos2d[2]
-        # 点在图片中的坐标
-        x_2d, y_2d = pos2d[0], pos2d[1]
-        vertices_pos2d.append((y_2d, x_2d, vertex_depth))
-    return vertices_pos2d
-
-
-def vertices_to_2d_coords_test(bbox, intrinsic_mat, extrinsic_mat):
-    """将bbox在世界坐标系中的点投影到该相机获取二维图片的坐标和点的深度"""
-    vertices_pos2d = []
-    for vertex in bbox:
-        # 获取点在world坐标系中的向量
-        pos_vector = vertex_to_world_vector(vertex)
-        # 将点的world坐标转换到相机坐标系中
-        transformed_3d_pos = proj_to_camera(pos_vector, extrinsic_mat)
-        # 将点的相机坐标转换为二维图片的坐标
-        pos2d = proj_to_2d(transformed_3d_pos, intrinsic_mat)
-        pos2d = np.expand_dims(pos2d, axis=1)
         # 点实际的深度
         vertex_depth = pos2d[2]
         # 点在图片中的坐标
@@ -400,24 +310,6 @@ def point_is_occluded(point, vertex_depth, depth_image):
                 is_occluded.append(False)
     # 当四个邻居点都大于深度图像值时，点被遮挡。返回true
     return all(is_occluded)
-
-
-def point_is_occluded_custom(point, vertex_depth, depth_image):
-    y, x = map(int, point)
-    from itertools import product
-
-    neigbours = product((1, -1), repeat=2)
-    is_occluded = []
-    for dy, dx in neigbours:
-        if point_in_canvas((dy + y, dx + x)):
-            # 判断点到图像的距离是否大于深对应深度图像的深度值
-            if depth_image[y + dy, x + dx] < vertex_depth:
-                is_occluded.append(True)
-            else:
-                is_occluded.append(False)
-    # 当四个邻居点都大于深度图像值时，点被遮挡。返回true
-    visible = [True if x is False else False for x in is_occluded]
-    return all(is_occluded), visible
 
 
 def midpoint_from_agent_location(location, extrinsic_mat):
