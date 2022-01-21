@@ -200,6 +200,29 @@ def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, ob
     return vertices_pos2d
 
 
+def bbox_2d_from_agent_test(
+    intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp
+):
+    bbox_cords = vertices_from_extension_test(obj_bbox.extent)
+    bbox_matrix = None
+    if obj_tp == 1 or obj_tp == 0:
+        bbox_transform = carla.Transform(obj_bbox.location)
+        bbox_matrix = get_matrix(bbox_transform)
+    else:
+        box_location = carla.Location(
+            obj_bbox.location.x - obj_transform.location.x,
+            obj_bbox.location.y - obj_transform.location.y,
+            obj_bbox.location.z - obj_transform.location.z,
+        )
+        box_rotation = obj_bbox.rotation
+        bbox_transform = carla.Transform(box_location, box_rotation)
+        # bbox = transform_points(bbox_transform, bbox)
+    obj_word_matrix = get_matrix(obj_transform)
+    bb_world_matrix = np.dot(obj_word_matrix, bbox_matrix)
+    vertices_pos2d = np.dot(bb_world_matrix, np.transpose(bbox_cords))
+    return vertices_pos2d
+
+
 def vertices_from_extension(ext):
     """以自身为原点的八个点的坐标"""
     return np.array(
@@ -214,6 +237,51 @@ def vertices_from_extension(ext):
             [-ext.x, -ext.y, -ext.z],  # Bottom right back
         ]
     )
+
+
+def vertices_from_extension_test(extent):
+    """
+    Returns 3D bounding box for a vehicle.
+    """
+    cords = np.zeros((8, 4))
+    cords[0, :] = np.array([extent.x, extent.y, -extent.z, 1])
+    cords[1, :] = np.array([-extent.x, extent.y, -extent.z, 1])
+    cords[2, :] = np.array([-extent.x, -extent.y, -extent.z, 1])
+    cords[3, :] = np.array([extent.x, -extent.y, -extent.z, 1])
+    cords[4, :] = np.array([extent.x, extent.y, extent.z, 1])
+    cords[5, :] = np.array([-extent.x, extent.y, extent.z, 1])
+    cords[6, :] = np.array([-extent.x, -extent.y, extent.z, 1])
+    cords[7, :] = np.array([extent.x, -extent.y, extent.z, 1])
+    return cords
+
+
+def get_matrix(transform):
+    """
+    Creates matrix from carla transform.
+    """
+
+    rotation = transform.rotation
+    location = transform.location
+    c_y = np.cos(np.radians(rotation.yaw))
+    s_y = np.sin(np.radians(rotation.yaw))
+    c_r = np.cos(np.radians(rotation.roll))
+    s_r = np.sin(np.radians(rotation.roll))
+    c_p = np.cos(np.radians(rotation.pitch))
+    s_p = np.sin(np.radians(rotation.pitch))
+    matrix = np.matrix(np.identity(4))
+    matrix[0, 3] = location.x
+    matrix[1, 3] = location.y
+    matrix[2, 3] = location.z
+    matrix[0, 0] = c_p * c_y
+    matrix[0, 1] = c_y * s_p * s_r - s_y * c_r
+    matrix[0, 2] = -c_y * s_p * c_r - s_y * s_r
+    matrix[1, 0] = s_y * c_p
+    matrix[1, 1] = s_y * s_p * s_r + c_y * c_r
+    matrix[1, 2] = -s_y * s_p * c_r + c_y * s_r
+    matrix[2, 0] = s_p
+    matrix[2, 1] = -c_p * s_r
+    matrix[2, 2] = c_p * c_r
+    return matrix
 
 
 def transform_points(transform, points):
@@ -262,7 +330,7 @@ def calculate_occlusion_stats(vertices_pos2d, depth_image):
     """作用：筛选bbox八个顶点中实际可见的点"""
     num_visible_vertices = 0
     num_vertices_outside_camera = 0
-
+    print("vertices_pos2d ", vertices_pos2d.shape)
     for y_2d, x_2d, vertex_depth in vertices_pos2d:
         # 点在可见范围中，并且没有超出图片范围
         if MAX_RENDER_DEPTH_IN_METERS > vertex_depth > 0 and point_in_canvas(
