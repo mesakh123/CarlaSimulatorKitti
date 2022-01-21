@@ -104,7 +104,13 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
         object_type = 0
         if isinstance(obj, carla.VehicleControl):
             object_type = 1
-        bbox_2d = custom_calc_projected_2d_bbox(vertices_pos2d, object_type)
+
+        bbox_exists, bbox_2d, area = custom_calc_projected_2d_bbox(
+            vertices_pos2d, depth_image, object_type
+        )
+
+        if not bbox_exists or (area / (WINDOW_HEIGHT * WINDOW_WIDTH) <= 2.5e-4):
+            return None, None
 
         rotation_y = (
             get_relative_rotation_y(
@@ -400,6 +406,24 @@ def point_is_occluded(point, vertex_depth, depth_image):
     return all(is_occluded)
 
 
+def point_is_occluded_custom(point, vertex_depth, depth_image):
+    y, x = map(int, point)
+    from itertools import product
+
+    neigbours = product((1, -1), repeat=2)
+    is_occluded = []
+    for dy, dx in neigbours:
+        if point_in_canvas((dy + y, dx + x)):
+            # 判断点到图像的距离是否大于深对应深度图像的深度值
+            if depth_image[y + dy, x + dx] < vertex_depth:
+                is_occluded.append(True)
+            else:
+                is_occluded.append(False)
+    # 当四个邻居点都大于深度图像值时，点被遮挡。返回true
+    visible = [True if x is False else False for x in is_occluded]
+    return all(is_occluded), visible
+
+
 def midpoint_from_agent_location(location, extrinsic_mat):
     """将agent在世界坐标系中的中心点转换到相机坐标系下"""
     midpoint_vector = np.array(
@@ -482,20 +506,49 @@ def degrees_to_radians(degrees):
     return degrees * math.pi / 180
 
 
-def custom_calc_projected_2d_bbox(vertices_pos2d, object_type=0):
+def get_4_points_max_2d_area(bb_3d_points):
+    xmin = int(min(bb_3d_points[:, 0]))
+    ymin = int(min(bb_3d_points[:, 1]))
+    xmax = int(max(bb_3d_points[:, 0]))
+    ymax = int(max(bb_3d_points[:, 1]))
+    max_2d_area = (xmax - xmin) * (ymax - ymin)
+    # If there is no area (e.g. its a line), then there is no bounding box!
+    bbox_exists = True
+    if xmin == xmax or ymin == ymax:
+        bbox_exists = False
+        return None, bbox_exists, 0
+
+    # Getting the Z point that is closer to the camera (since we are extrapolating the min/max points anyways)
+    # This way, more bbox points can be salvaged after the depth filtering (since they will be considered in front of
+    # the object that the depth array is seeing)
+    z = min(bb_3d_points[:, 2])
+    bb_3d_points = np.array(
+        [[xmin, ymin, z], [xmin, ymax, z], [xmax, ymin, z], [xmax, ymax, z]]
+    )
+    return bb_3d_points, bbox_exists, max_2d_area
+
+
+def custom_calc_projected_2d_bbox(vertices_pos2d, depth_image, object_type=0):
     """根据八个顶点的图片坐标，计算二维bbox的左上和右下的坐标值"""
     legal_pos2d = list(filter(lambda x: x is not None, vertices_pos2d))
-    y_coords, x_coords = [int(x[0][0]) for x in legal_pos2d], [
-        int(x[1][0]) for x in legal_pos2d
-    ]
+    y_coords, x_coords, z_coords = (
+        [int(x[1][0]) for x in legal_pos2d],
+        [int(x[0][0]) for x in legal_pos2d],
+        [int(x[2][0]) for x in legal_pos2d],
+    )
 
     image_width = int(cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"])
     image_height = int(cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"])
 
-    min_x, max_x = min(x_coords), max(x_coords)
-    min_y, max_y = min(y_coords), max(y_coords)
+    min_x_coor, max_x_coor = min(x_coords), max(x_coords)
+    min_y_coor, max_y_coor = min(y_coords), max(y_coords)
 
-    min_x, max_x = max(0, min_x), min(image_width, max_x)
-    min_y, max_y = max(0, min_y), min(image_height, max_y)
+    min_x, max_x = max(0, min_x_coor), min(image_width - 1, max_x_coor)
+    min_y, max_y = max(0, min_y_coor), min(image_height - 1, max_y_coor)
 
-    return [min_x, min_y, max_x, max_y]
+    area = (max_x - min_x) * (max_y - min_y)
+
+    if (max_x == min_x) or (min_y == max_y):
+        return False, [0, 0, 0, 0], 0
+
+    return True, [min_x, min_y, max_x, max_y], area
