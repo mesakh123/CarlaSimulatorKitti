@@ -7,9 +7,9 @@ def depth_to_array(image):
     """
     array = np.frombuffer(image.raw_data)
     array = np.reshape(array, (image.height, image.width, 4))  # RGBA format
-    array = array.astype(np.float32)  # 2ms
     array = array[:, :, :3]  # Take only RGB
     array = array[:, :, ::-1]  # BGR
+    array = array.astype(np.float32)  # 2ms
     gray_depth = (
         array[:, :, 0] + array[:, :, 1] * 256.0 + array[:, :, 2] * 256.0 * 256.0
     ) / (
