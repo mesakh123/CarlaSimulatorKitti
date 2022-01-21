@@ -359,7 +359,6 @@ def calculate_occlusion_stats(vertices_pos2d, depth_image):
     """作用：筛选bbox八个顶点中实际可见的点"""
     num_visible_vertices = 0
     num_vertices_outside_camera = 0
-    print("vertices_pos2d ", vertices_pos2d.shape)
     for y_2d, x_2d, vertex_depth in vertices_pos2d:
         # 点在可见范围中，并且没有超出图片范围
         if MAX_RENDER_DEPTH_IN_METERS > vertex_depth > 0 and point_in_canvas(
