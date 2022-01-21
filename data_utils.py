@@ -82,11 +82,11 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
     )
     obj_bbox = obj.bounding_box
     if isinstance(obj, carla.EnvironmentObject):
-        vertices_pos2d = bbox_2d_from_agent(
+        vertices_pos2d = bbox_2d_from_agent_test(
             intrinsic, extrinsic, obj_bbox, obj_transform, 0
         )
     else:
-        vertices_pos2d = bbox_2d_from_agent(
+        vertices_pos2d = bbox_2d_from_agent_test(
             intrinsic, extrinsic, obj_bbox, obj_transform, 1
         )
     depth_image = depth_to_array(depth_data)
@@ -220,6 +220,9 @@ def bbox_2d_from_agent_test(
     obj_word_matrix = get_matrix(obj_transform)
     bb_world_matrix = np.dot(obj_word_matrix, bbox_matrix)
     vertices_pos2d = np.dot(bb_world_matrix, np.transpose(bbox_cords))
+    vertices_pos2d = vertices_to_2d_coords_test(
+        vertices_pos2d, intrinsic_mat, extrinsic_mat
+    )
     return vertices_pos2d
 
 
@@ -308,6 +311,26 @@ def vertices_to_2d_coords(bbox, intrinsic_mat, extrinsic_mat):
         pos2d = proj_to_2d(transformed_3d_pos, intrinsic_mat)
         # 点实际的深度
         vertex_depth = pos2d[2]
+        # 点在图片中的坐标
+        x_2d, y_2d = pos2d[0], pos2d[1]
+        vertices_pos2d.append((y_2d, x_2d, vertex_depth))
+    return vertices_pos2d
+
+
+def vertices_to_2d_coords_test(bbox, intrinsic_mat, extrinsic_mat):
+    """将bbox在世界坐标系中的点投影到该相机获取二维图片的坐标和点的深度"""
+    vertices_pos2d = []
+    for vertex in bbox:
+        # 获取点在world坐标系中的向量
+        pos_vector = vertex_to_world_vector(vertex)
+        # 将点的world坐标转换到相机坐标系中
+        transformed_3d_pos = proj_to_camera(pos_vector, extrinsic_mat)
+        # 将点的相机坐标转换为二维图片的坐标
+        pos2d = proj_to_2d(transformed_3d_pos, intrinsic_mat)
+        # 点实际的深度
+        vertex_depth = pos2d[2]
+        if vertex_depth <= 0:
+            continue
         # 点在图片中的坐标
         x_2d, y_2d = pos2d[0], pos2d[1]
         vertices_pos2d.append((y_2d, x_2d, vertex_depth))
@@ -403,9 +426,11 @@ def proj_to_2d(camera_pos_vector, intrinsic_mat):
     cords_y_minus_z_x = np.concatenate(
         [cords_x_y_z[1, :], -cords_x_y_z[2, :], cords_x_y_z[0, :]]
     )
-    pos2d = np.dot(intrinsic_mat, cords_y_minus_z_x)
+    pos2d = np.transpose(np.dot(intrinsic_mat, cords_y_minus_z_x))
     # normalize the 2D points
-    pos2d = np.array([pos2d[0] / pos2d[2], pos2d[1] / pos2d[2], pos2d[2]])
+    pos2d = np.concatenate(
+        [pos2d[:, 0] / pos2d[:, 2], pos2d[:, 1] / pos2d[:, 2], pos2d[:, 2]], axis=1
+    )
     return pos2d
 
 
