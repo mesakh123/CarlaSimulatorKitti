@@ -327,10 +327,9 @@ def vertices_to_2d_coords_test(bbox, intrinsic_mat, extrinsic_mat):
         transformed_3d_pos = proj_to_camera(pos_vector, extrinsic_mat)
         # 将点的相机坐标转换为二维图片的坐标
         pos2d = proj_to_2d(transformed_3d_pos, intrinsic_mat)
+        posd2d = np.expand_dims(pos2d, axis=1)
         # 点实际的深度
         vertex_depth = pos2d[2]
-        if vertex_depth <= 0:
-            continue
         # 点在图片中的坐标
         x_2d, y_2d = pos2d[0], pos2d[1]
         vertices_pos2d.append((y_2d, x_2d, vertex_depth))
