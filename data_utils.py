@@ -432,11 +432,8 @@ def proj_to_2d(camera_pos_vector, intrinsic_mat):
     cords_y_minus_z_x = np.concatenate(
         [cords_x_y_z[1, :], -cords_x_y_z[2, :], cords_x_y_z[0, :]]
     )
-    pos2d = np.transpose(np.dot(intrinsic_mat, cords_y_minus_z_x))
-    # normalize the 2D points
-    pos2d = np.concatenate(
-        [pos2d[:, 0] / pos2d[:, 2], pos2d[:, 1] / pos2d[:, 2], pos2d[:, 2]], axis=1
-    )
+    pos2d = np.dot(intrinsic_mat, cords_y_minus_z_x)
+    pos2d = np.array([pos2d[0] / pos2d[2], pos2d[1] / pos2d[2], pos2d[2]])
     return pos2d
 
 
