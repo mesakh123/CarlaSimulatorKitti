@@ -99,13 +99,22 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
     ):
         obj_tp = obj_type(obj)
         midpoint = midpoint_from_agent_location(obj_transform.location, extrinsic)
-        bbox_2d = calc_projected_2d_bbox(vertices_pos2d)
+
+        # bbox_2d = calc_projected_2d_bbox(vertices_pos2d)
+        object_type = 0
+        if isinstance(obj, carla.VehicleControl):
+            object_type = 1
+
+        bbox_2d = custom_calc_projected_2d_bbox(
+            vertices_pos2d, depth_image, object_type
+        )
         rotation_y = (
             get_relative_rotation_y(
                 agent.get_transform().rotation, obj_transform.rotation
             )
             % math.pi
         )
+
         ext = obj.bounding_box.extent
         truncated = num_vertices_outside_camera / 8
         if num_visible_vertices >= 6:
@@ -262,7 +271,6 @@ def calculate_occlusion_stats(vertices_pos2d, depth_image):
     """作用：筛选bbox八个顶点中实际可见的点"""
     num_visible_vertices = 0
     num_vertices_outside_camera = 0
-
     for y_2d, x_2d, vertex_depth in vertices_pos2d:
         # 点在可见范围中，并且没有超出图片范围
         if MAX_RENDER_DEPTH_IN_METERS > vertex_depth > 0 and point_in_canvas(
@@ -336,7 +344,6 @@ def proj_to_2d(camera_pos_vector, intrinsic_mat):
         [cords_x_y_z[1, :], -cords_x_y_z[2, :], cords_x_y_z[0, :]]
     )
     pos2d = np.dot(intrinsic_mat, cords_y_minus_z_x)
-    # normalize the 2D points
     pos2d = np.array([pos2d[0] / pos2d[2], pos2d[1] / pos2d[2], pos2d[2]])
     return pos2d
 
@@ -385,3 +392,21 @@ def calc_projected_2d_bbox(vertices_pos2d):
 
 def degrees_to_radians(degrees):
     return degrees * math.pi / 180
+
+
+def custom_calc_projected_2d_bbox(vertices_pos2d, depth_image, object_type=0):
+    """根据八个顶点的图片坐标，计算二维bbox的左上和右下的坐标值"""
+    legal_pos2d = list(filter(lambda x: x is not None, vertices_pos2d))
+    y_coords, x_coords = [int(x[0][0]) for x in legal_pos2d], [
+        int(x[1][0]) for x in legal_pos2d
+    ]
+    min_x, max_x = min(x_coords), max(x_coords)
+    min_y, max_y = min(y_coords), max(y_coords)
+
+    image_width = int(cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"])
+    image_height = int(cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"])
+
+    min_x, max_x = max(0, min_x), min(image_width, max_x)
+    min_y, max_y = max(0, min_y), min(image_height, max_y)
+
+    return [min_x, min_y, max_x, max_y]

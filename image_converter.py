@@ -10,8 +10,11 @@ def depth_to_array(image):
     array = array[:, :, :3]  # Take only RGB
     array = array[:, :, ::-1]  # BGR
     array = array.astype(np.float32)  # 2ms
-    gray_depth = ((array[:, :, 0] + array[:, :, 1] * 256.0 + array[:, :, 2] * 256.0 * 256.0) / (
-            (256.0 * 256.0 * 256.0) - 1))  # 2.5ms
+    gray_depth = (
+        array[:, :, 0] + array[:, :, 1] * 256.0 + array[:, :, 2] * 256.0 * 256.0
+    ) / (
+        (256.0 * 256.0 * 256.0) - 1
+    )  # 2.5ms
     gray_depth = 1000 * gray_depth
     return gray_depth
 

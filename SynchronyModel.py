@@ -42,6 +42,7 @@ class SynchronyModel:
         self.image_height = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"][
             "image_size_y"
         ]
+        self.fov = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["fov"]
         self.destination = None
 
     def set_synchrony(self):
@@ -220,6 +221,15 @@ class SynchronyModel:
                 ),
             )
             sensor = self.world.spawn_actor(sensor_bp, transform, attach_to=agent)
+
+            if str(config["BLUEPRINT"]) == "sensor.camera.rgb":
+                calibration = np.identity(3)
+                calibration[0, 2] = self.image_width / 2.0
+                calibration[1, 2] = self.image_height / 2.0
+                calibration[0, 0] = calibration[1, 1] = self.image_width / (
+                    2.0 * np.tan(self.fov * np.pi / 360.0)
+                )
+                sensor.calibration = calibration
             self.actors["sensors"][agent].append(sensor)
         self.world.tick()
 

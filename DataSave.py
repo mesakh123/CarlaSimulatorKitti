@@ -1,9 +1,10 @@
 from config import config_to_trans
 from export_utils import *
+import time
 
 
 class DataSave:
-    def __init__(self, cfg):
+    def __init__(self, cfg, kitti_only=False):
         self.cfg = cfg
         self.OUTPUT_FOLDER = None
         self.LIDAR_PATH = None
@@ -11,6 +12,7 @@ class DataSave:
         self.CARLA_LABEL_PATH = None
         self.IMAGE_PATH = None
         self.CALIBRATION_PATH = None
+        self.kitti_only = kitti_only
         self._generate_path(self.cfg["SAVE_CONFIG"]["ROOT_PATH"])
         self.captured_frame_no = self._current_captured_frame_num()
 
@@ -19,6 +21,8 @@ class DataSave:
         PHASE = "training"
         self.OUTPUT_FOLDER = os.path.join(root_path, PHASE)
         folders = ["calib", "data", "labels", "carla_label", "velodyne"]
+        if self.kitti_only:
+            folders = ["data", "labels"]
 
         for folder in folders:
             directory = os.path.join(self.OUTPUT_FOLDER, folder)
@@ -75,6 +79,8 @@ class DataSave:
             save_ref_files(self.OUTPUT_FOLDER, self.captured_frame_no)
             save_image_data(img_fname, dt["sensor_data"][0])
             save_label_data(kitti_label_fname, dt["kitti_datapoints"])
+            if self.kitti_only:
+                continue
             save_label_data(carla_label_fname, dt["carla_datapoints"])
             save_calibration_matrices(
                 [camera_transform, lidar_transform], calib_filename, dt["intrinsic"]
