@@ -28,6 +28,35 @@ WINDOW_HEIGHT = cfg["SENSOR_CONFIG"]["DEPTH_RGB"]["ATTRIBUTE"]["image_size_y"]
 KITTI_CLASSES = [""]
 
 
+def get_matrix(transform):
+    """
+    Creates matrix from carla transform.
+    """
+
+    rotation = transform.rotation
+    location = transform.location
+    c_y = np.cos(np.radians(rotation.yaw))
+    s_y = np.sin(np.radians(rotation.yaw))
+    c_r = np.cos(np.radians(rotation.roll))
+    s_r = np.sin(np.radians(rotation.roll))
+    c_p = np.cos(np.radians(rotation.pitch))
+    s_p = np.sin(np.radians(rotation.pitch))
+    matrix = np.matrix(np.identity(4))
+    matrix[0, 3] = location.x
+    matrix[1, 3] = location.y
+    matrix[2, 3] = location.z
+    matrix[0, 0] = c_p * c_y
+    matrix[0, 1] = c_y * s_p * s_r - s_y * c_r
+    matrix[0, 2] = -c_y * s_p * c_r - s_y * s_r
+    matrix[1, 0] = s_y * c_p
+    matrix[1, 1] = s_y * s_p * s_r + c_y * c_r
+    matrix[1, 2] = -s_y * s_p * c_r + c_y * s_r
+    matrix[2, 0] = s_p
+    matrix[2, 1] = -c_p * s_r
+    matrix[2, 2] = c_p * c_r
+    return matrix
+
+
 def objects_filter(data):
     environment_objects = data["environment_objects"]
     agents_data = data["agents_data"]
@@ -35,7 +64,9 @@ def objects_filter(data):
     actors = [
         x
         for x in actors
-        if x.type_id.find("vehicle") != -1 or x.type_id.find("walker") != -1
+        if x.type_id.find("vehicle") != -1
+        or x.type_id.find("walker") != -1
+        or x.type_id.find("traffic_light") != -1
     ]
     for agent, dataDict in agents_data.items():
         intrinsic = dataDict["intrinsic"]
@@ -188,6 +219,48 @@ def get_relative_rotation_y(agent_rotation, obj_rotation):
     return degrees_to_radians(rot_agent - rot_car)
 
 
+### Get transformation matrix from carla.Transform object
+def get_matrix(transform):
+    rotation = transform.rotation
+    location = transform.location
+    c_y = np.cos(np.radians(rotation.yaw))
+    s_y = np.sin(np.radians(rotation.yaw))
+    c_r = np.cos(np.radians(rotation.roll))
+    s_r = np.sin(np.radians(rotation.roll))
+    c_p = np.cos(np.radians(rotation.pitch))
+    s_p = np.sin(np.radians(rotation.pitch))
+    matrix = np.matrix(np.identity(4))
+    matrix[0, 3] = location.x
+    matrix[1, 3] = location.y
+    matrix[2, 3] = location.z
+    matrix[0, 0] = c_p * c_y
+    matrix[0, 1] = c_y * s_p * s_r - s_y * c_r
+    matrix[0, 2] = -c_y * s_p * c_r - s_y * s_r
+    matrix[1, 0] = s_y * c_p
+    matrix[1, 1] = s_y * s_p * s_r + c_y * c_r
+    matrix[1, 2] = -s_y * s_p * c_r + c_y * s_r
+    matrix[2, 0] = s_p
+    matrix[2, 1] = -c_p * s_r
+    matrix[2, 2] = c_p * c_r
+    return matrix
+
+
+def bbox_2d_from_agent_test(
+    intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp
+):
+
+    transform = [
+        obj_transform.location.x,
+        obj_transform.location.y,
+        obj_transform.location.z,
+        obj_transform.rotation.roll,
+        obj_transform.rotation.pitch,
+        obj_transform.rotation.yaw,
+    ]
+
+    return vertices_pos2d
+
+
 def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp):
     bbox = vertices_from_extension(obj_bbox.extent)
     if obj_tp == 1:
@@ -232,7 +305,7 @@ def transform_points(transform, points):
     # [[X0..,Xn],[Y0..,Yn],[Z0..,Zn],[1,..1]]  (4,8)
     points = np.append(points, np.ones((1, points.shape[1])), axis=0)
     # transform.get_matrix() 获取当前坐标系向相对坐标系的旋转矩阵
-    points = np.mat(transform.get_matrix()) * points
+    points = np.mat(get_matrix(transform)) * points
     # 返回前三行
     return points[0:3].transpose()
 

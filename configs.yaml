@@ -37,4 +37,4 @@ FILTER_CONFIG:
 
 SAVE_CONFIG:
   ROOT_PATH: dataset
-  STEP: 1
+  STEP: 10

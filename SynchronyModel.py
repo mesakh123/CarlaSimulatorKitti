@@ -6,7 +6,7 @@ import logging
 import numpy as np
 
 from config import config_to_trans
-from data_utils import camera_intrinsic, filter_by_distance
+from data_utils import camera_intrinsic, filter_by_distance, get_matrix
 import sys
 import os
 
@@ -260,7 +260,7 @@ class SynchronyModel:
                 image_width, image_height
             )
             ret["agents_data"][agent]["extrinsic"] = np.mat(
-                self.actors["sensors"][agent][0].get_transform().get_matrix()
+                get_matrix(self.actors["sensors"][agent][0].get_transform())
             )
         filter_by_distance(
             ret, self.cfg["FILTER_CONFIG"]["PRELIMINARY_FILTER_DISTANCE"]
