@@ -260,7 +260,7 @@ class SynchronyModel:
                 image_width, image_height
             )
             ret["agents_data"][agent]["extrinsic"] = np.mat(
-                get_matrix(self.actors["sensors"][agent][0].get_transform())
+                self.actors["sensors"][agent][0].get_transform().get_matrix()
             )
         filter_by_distance(
             ret, self.cfg["FILTER_CONFIG"]["PRELIMINARY_FILTER_DISTANCE"]

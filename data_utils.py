@@ -66,7 +66,7 @@ def objects_filter(data):
         for x in actors
         if x.type_id.find("vehicle") != -1
         or x.type_id.find("walker") != -1
-        or x.type_id.find("traffic_light") != -1
+        or x.type_id.find("traffic") != -1
     ]
     for agent, dataDict in agents_data.items():
         intrinsic = dataDict["intrinsic"]
@@ -106,20 +106,33 @@ def objects_filter(data):
 
 
 def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
+    actor_type_list = [
+        carla.Walker,carla.Vehicle,carla.WalkerAIController,
+
+    ]
+    object_type = 1 if type(obj) in actor_type_list \
+    else 0
+    
+    obj_tp = obj_type(obj)
+    if isinstance(obj_tp,str) and obj_tp is "TrafficLight":
+            object_type = 2
+    
+    print("{} {}".format(type(obj_tp),type(object_type)))
+    print("{} {}".format(obj_tp, object_type) )
+    print("")
+
     obj_transform = (
         obj.transform
         if isinstance(obj, carla.EnvironmentObject)
         else obj.get_transform()
     )
+
+
     obj_bbox = obj.bounding_box
-    if isinstance(obj, carla.EnvironmentObject):
-        vertices_pos2d = bbox_2d_from_agent(
-            intrinsic, extrinsic, obj_bbox, obj_transform, 0
-        )
-    else:
-        vertices_pos2d = bbox_2d_from_agent(
-            intrinsic, extrinsic, obj_bbox, obj_transform, 1
-        )
+    vertices_pos2d = bbox_2d_from_agent(
+            intrinsic, extrinsic, obj_bbox, obj_transform, object_type
+    )
+
     depth_image = depth_to_array(depth_data)
     num_visible_vertices, num_vertices_outside_camera = calculate_occlusion_stats(
         vertices_pos2d, depth_image
@@ -128,14 +141,12 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
         num_visible_vertices >= MIN_VISIBLE_VERTICES_FOR_RENDER
         and num_vertices_outside_camera < MAX_OUT_VERTICES_FOR_RENDER
     ):
-        obj_tp = obj_type(obj)
         midpoint = midpoint_from_agent_location(obj_transform.location, extrinsic)
+        #midpoint[:3] = np.identity(3) * midpoint[:3]
 
         # bbox_2d = calc_projected_2d_bbox(vertices_pos2d)
-        object_type = 0
-        if isinstance(obj, carla.VehicleControl):
-            object_type = 1
-
+        
+        
         bbox_2d = custom_calc_projected_2d_bbox(
             vertices_pos2d, depth_image, object_type
         )
@@ -207,8 +218,10 @@ def obj_type(obj):
         if obj.type_id.find("walker") is not -1:
             return "Pedestrian"
         if obj.type_id.find("vehicle") is not -1:
-            return "Car"
-        return None
+            return "Vehicles"
+        if obj.type_id.find("traffic_light") is not -1:
+            return "TrafficLight"
+        return "None"
 
 
 def get_relative_rotation_y(agent_rotation, obj_rotation):
@@ -219,67 +232,76 @@ def get_relative_rotation_y(agent_rotation, obj_rotation):
     return degrees_to_radians(rot_agent - rot_car)
 
 
-### Get transformation matrix from carla.Transform object
-def get_matrix(transform):
-    rotation = transform.rotation
-    location = transform.location
-    c_y = np.cos(np.radians(rotation.yaw))
-    s_y = np.sin(np.radians(rotation.yaw))
-    c_r = np.cos(np.radians(rotation.roll))
-    s_r = np.sin(np.radians(rotation.roll))
-    c_p = np.cos(np.radians(rotation.pitch))
-    s_p = np.sin(np.radians(rotation.pitch))
-    matrix = np.matrix(np.identity(4))
-    matrix[0, 3] = location.x
-    matrix[1, 3] = location.y
-    matrix[2, 3] = location.z
-    matrix[0, 0] = c_p * c_y
-    matrix[0, 1] = c_y * s_p * s_r - s_y * c_r
-    matrix[0, 2] = -c_y * s_p * c_r - s_y * s_r
-    matrix[1, 0] = s_y * c_p
-    matrix[1, 1] = s_y * s_p * s_r + c_y * c_r
-    matrix[1, 2] = -s_y * s_p * c_r + c_y * s_r
-    matrix[2, 0] = s_p
-    matrix[2, 1] = -c_p * s_r
-    matrix[2, 2] = c_p * c_r
-    return matrix
 
+def transform_points_custom(txm_mat, points):
+    """
+    Given a 4x4 transformation matrix, transform an array of 3D points.
+    Expected point foramt: [[X0,Y0,Z0],..[Xn,Yn,Zn]]
+    """
+    # Needed foramt: [[X0,..Xn],[Z0,..Zn],[Z0,..Zn]]. So let's transpose
+    # the point matrix.
+    points = points.transpose()
+    # Add 0s row: [[X0..,Xn],[Y0..,Yn],[Z0..,Zn],[0,..0]]
+    points = np.append(points, np.ones((1, points.shape[1])), axis=0)
+    # Point transformation
+    points = txm_mat * points
+    # Return all but last row
+    return points[0:3].transpose()
 
-def bbox_2d_from_agent_test(
-    intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp
-):
+def carla_rotation_to_RPY(carla_rotation):
+    """
+    Convert a carla rotation to a roll, pitch, yaw tuple
+    Considers the conversion from left-handed system (unreal) to right-handed
+    system.
+    :param carla_rotation: the carla rotation
+    :type carla_rotation: carla.Rotation
+    :return: a tuple with 3 elements (roll, pitch, yaw)
+    :rtype: tuple
+    """
+    roll = carla_rotation.roll
+    pitch = -carla_rotation.pitch
+    yaw = -carla_rotation.yaw
 
-    transform = [
-        obj_transform.location.x,
-        obj_transform.location.y,
-        obj_transform.location.z,
-        obj_transform.rotation.roll,
-        obj_transform.rotation.pitch,
-        obj_transform.rotation.yaw,
-    ]
-
-    return vertices_pos2d
-
+    return (roll, pitch, yaw)
 
 def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp):
     bbox = vertices_from_extension(obj_bbox.extent)
-    if obj_tp == 1:
-        bbox_transform = carla.Transform(obj_bbox.location, obj_bbox.rotation)
-        bbox = transform_points(bbox_transform, bbox)
+    rot = obj_transform.rotation
+    if obj_tp == 1:        
+        bbox_transform = carla.Transform(obj_bbox.location, rot)
+
+    elif obj_tp ==2:
+        box_location = obj_transform.location
+        print("rot.yaw", rot.yaw)
+        if -2 < rot.yaw < 2:
+            box_location = carla.Location(obj_transform.location + carla.Location(-0.20, 0.25, 2.5))
+        elif 88 < rot.yaw < 92:
+            box_location = carla.Location(obj_transform.location + carla.Location(-0.25, -0.20, 2.5))
+        elif -88 > rot.yaw > -92:
+            box_location = carla.Location(obj_transform.location + carla.Location(0.25, 0.20, 2.5))
+        elif -178 > rot.yaw > -182 or 178 < rot.yaw < 182:
+            box_location = carla.Location(obj_transform.location + carla.Location(0.20, -0.25, 2.5))
+        else:
+            box_location = carla.Location(
+                obj_bbox.location.x - obj_transform.location.x,
+                obj_bbox.location.y - obj_transform.location.y,
+                obj_bbox.location.z - obj_transform.location.z,
+            )
+        bbox_transform = carla.Transform(box_location, rot)
+
     else:
         box_location = carla.Location(
             obj_bbox.location.x - obj_transform.location.x,
             obj_bbox.location.y - obj_transform.location.y,
             obj_bbox.location.z - obj_transform.location.z,
         )
-        box_rotation = obj_bbox.rotation
-        bbox_transform = carla.Transform(box_location, box_rotation)
-        bbox = transform_points(bbox_transform, bbox)
-    # 获取bbox在世界坐标系下的点的坐标
+        bbox_transform = carla.Transform(box_location, rot)
+
+    bbox = transform_points(bbox_transform, bbox)
     bbox = transform_points(obj_transform, bbox)
-    # 将世界坐标系下的bbox八个点转换到二维图片中
     vertices_pos2d = vertices_to_2d_coords(bbox, intrinsic_mat, extrinsic_mat)
     return vertices_pos2d
+
 
 
 def vertices_from_extension(ext):
@@ -297,16 +319,24 @@ def vertices_from_extension(ext):
         ]
     )
 
+def vertices_from_extension2(extent):
+    cords = np.zeros((8, 3))
+    cords[0, :] = np.array([extent.x, extent.y, -extent.z])
+    cords[1, :] = np.array([-extent.x, extent.y, -extent.z])
+    cords[2, :] = np.array([-extent.x, -extent.y, -extent.z])
+    cords[3, :] = np.array([extent.x, -extent.y, -extent.z])
+    cords[4, :] = np.array([extent.x, extent.y, extent.z])
+    cords[5, :] = np.array([-extent.x, extent.y, extent.z])
+    cords[6, :] = np.array([-extent.x, -extent.y, extent.z])
+    cords[7, :] = np.array([extent.x, -extent.y, extent.z])
+    return cords
+
 
 def transform_points(transform, points):
-    """作用：将三维点坐标转换到指定坐标系下"""
-    # 转置
     points = points.transpose()
     # [[X0..,Xn],[Y0..,Yn],[Z0..,Zn],[1,..1]]  (4,8)
     points = np.append(points, np.ones((1, points.shape[1])), axis=0)
-    # transform.get_matrix() 获取当前坐标系向相对坐标系的旋转矩阵
-    points = np.mat(get_matrix(transform)) * points
-    # 返回前三行
+    points = np.mat(transform.get_matrix()) * points
     return points[0:3].transpose()
 
 
