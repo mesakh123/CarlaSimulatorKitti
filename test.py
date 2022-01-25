@@ -734,6 +734,8 @@ class SynchronyModel(object):
     def _make_setting(self):
         client = carla.Client("localhost", 2000)
         client.set_timeout(5.0)
+        client.load_world('Town10')
+        client.reload_world()
         world = client.get_world()
         traffic_manager = client.get_trafficmanager(8000)
         traffic_manager.set_global_distance_to_leading_vehicle(1.0)

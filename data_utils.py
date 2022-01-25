@@ -28,13 +28,13 @@ WINDOW_HEIGHT = cfg["SENSOR_CONFIG"]["DEPTH_RGB"]["ATTRIBUTE"]["image_size_y"]
 KITTI_CLASSES = [""]
 
 
-def get_matrix(transform):
+def get_matrix(location, rotation):
     """
     Creates matrix from carla transform.
     """
 
-    rotation = transform.rotation
-    location = transform.location
+    # rotation = transform.rotation
+    # location = transform.location
     c_y = np.cos(np.radians(rotation.yaw))
     s_y = np.sin(np.radians(rotation.yaw))
     c_r = np.cos(np.radians(rotation.roll))
@@ -42,9 +42,6 @@ def get_matrix(transform):
     c_p = np.cos(np.radians(rotation.pitch))
     s_p = np.sin(np.radians(rotation.pitch))
     matrix = np.matrix(np.identity(4))
-    matrix[0, 3] = location.x
-    matrix[1, 3] = location.y
-    matrix[2, 3] = location.z
     matrix[0, 0] = c_p * c_y
     matrix[0, 1] = c_y * s_p * s_r - s_y * c_r
     matrix[0, 2] = -c_y * s_p * c_r - s_y * s_r
@@ -54,161 +51,12 @@ def get_matrix(transform):
     matrix[2, 0] = s_p
     matrix[2, 1] = -c_p * s_r
     matrix[2, 2] = c_p * c_r
+    # Last column
+    matrix[0, 3] = location.x
+    matrix[1, 3] = location.y
+    matrix[2, 3] = location.z
+    # matrix[3, 3] = 1 # already set (identity)
     return matrix
-
-
-def objects_filter(data):
-    environment_objects = data["environment_objects"]
-    agents_data = data["agents_data"]
-    actors = data["actors"]
-    actors = [
-        x
-        for x in actors
-        if x.type_id.find("vehicle") != -1
-        or x.type_id.find("walker") != -1
-        or x.type_id.find("traffic") != -1
-    ]
-    for agent, dataDict in agents_data.items():
-        intrinsic = dataDict["intrinsic"]
-        extrinsic = dataDict["extrinsic"]
-        sensors_data = dataDict["sensor_data"]
-        kitti_datapoints = []
-        carla_datapoints = []
-        rgb_image = to_rgb_array(sensors_data[0])
-        image = rgb_image.copy()
-        depth_data = sensors_data[1]
-
-        data["agents_data"][agent]["visible_environment_objects"] = []
-        for obj in environment_objects:
-            kitti_datapoint, carla_datapoint = is_visible_by_bbox(
-                agent, obj, image, depth_data, intrinsic, extrinsic
-            )
-            if kitti_datapoint is not None:
-                data["agents_data"][agent]["visible_environment_objects"].append(obj)
-                kitti_datapoints.append(kitti_datapoint)
-                carla_datapoints.append(carla_datapoint)
-
-        data["agents_data"][agent]["visible_actors"] = []
-
-        for act in actors:
-            kitti_datapoint, carla_datapoint = is_visible_by_bbox(
-                agent, act, image, depth_data, intrinsic, extrinsic
-            )
-            if kitti_datapoint is not None:
-                data["agents_data"][agent]["visible_actors"].append(act)
-                kitti_datapoints.append(kitti_datapoint)
-                carla_datapoints.append(carla_datapoint)
-
-        data["agents_data"][agent]["rgb_image"] = image
-        data["agents_data"][agent]["kitti_datapoints"] = kitti_datapoints
-        data["agents_data"][agent]["carla_datapoints"] = carla_datapoints
-    return data
-
-
-def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
-    actor_type_list = [
-        carla.Walker,carla.Vehicle,carla.WalkerAIController,
-
-    ]
-    object_type = 1 if type(obj) in actor_type_list \
-    else 0
-    
-    obj_tp = obj_type(obj)
-    if isinstance(obj_tp,str) and obj_tp is "TrafficLight":
-            object_type = 2
-    
-    print("{} {}".format(type(obj_tp),type(object_type)))
-    print("{} {}".format(obj_tp, object_type) )
-    print("")
-
-    obj_transform = (
-        obj.transform
-        if isinstance(obj, carla.EnvironmentObject)
-        else obj.get_transform()
-    )
-
-
-    obj_bbox = obj.bounding_box
-    vertices_pos2d = bbox_2d_from_agent(
-            intrinsic, extrinsic, obj_bbox, obj_transform, object_type
-    )
-
-    depth_image = depth_to_array(depth_data)
-    num_visible_vertices, num_vertices_outside_camera = calculate_occlusion_stats(
-        vertices_pos2d, depth_image
-    )
-    if (
-        num_visible_vertices >= MIN_VISIBLE_VERTICES_FOR_RENDER
-        and num_vertices_outside_camera < MAX_OUT_VERTICES_FOR_RENDER
-    ):
-        midpoint = midpoint_from_agent_location(obj_transform.location, extrinsic)
-        #midpoint[:3] = np.identity(3) * midpoint[:3]
-
-        # bbox_2d = calc_projected_2d_bbox(vertices_pos2d)
-        
-        
-        bbox_2d = custom_calc_projected_2d_bbox(
-            vertices_pos2d, depth_image, object_type
-        )
-        rotation_y = (
-            get_relative_rotation_y(
-                agent.get_transform().rotation, obj_transform.rotation
-            )
-            % math.pi
-        )
-
-        ext = obj.bounding_box.extent
-        truncated = num_vertices_outside_camera / 8
-        if num_visible_vertices >= 6:
-            occluded = 0
-        elif num_visible_vertices >= 4:
-            occluded = 1
-        else:
-            occluded = 2
-
-        velocity = (
-            "0 0 0"
-            if isinstance(obj, carla.EnvironmentObject)
-            else "{} {} {}".format(
-                obj.get_velocity().x, obj.get_velocity().y, obj.get_velocity().z
-            )
-        )
-        acceleration = (
-            "0 0 0"
-            if isinstance(obj, carla.EnvironmentObject)
-            else "{} {} {}".format(
-                obj.get_acceleration().x,
-                obj.get_acceleration().y,
-                obj.get_acceleration().z,
-            )
-        )
-        angular_velocity = (
-            "0 0 0"
-            if isinstance(obj, carla.EnvironmentObject)
-            else "{} {} {}".format(
-                obj.get_angular_velocity().x,
-                obj.get_angular_velocity().y,
-                obj.get_angular_velocity().z,
-            )
-        )
-        # draw_3d_bounding_box(rgb_image, vertices_pos2d)
-
-        kitti_data = KittiDescriptor()
-        kitti_data.set_truncated(truncated)
-        kitti_data.set_occlusion(occluded)
-        kitti_data.set_bbox(bbox_2d)
-        kitti_data.set_3d_object_dimensions(ext)
-        kitti_data.set_type(obj_tp)
-        kitti_data.set_3d_object_location(midpoint)
-        kitti_data.set_rotation_y(rotation_y)
-
-        carla_data = CarlaDescriptor()
-        carla_data.set_type(obj_tp)
-        carla_data.set_velocity(velocity)
-        carla_data.set_acceleration(acceleration)
-        carla_data.set_angular_velocity(angular_velocity)
-        return kitti_data, carla_data
-    return None, None
 
 
 def obj_type(obj):
@@ -233,77 +81,50 @@ def get_relative_rotation_y(agent_rotation, obj_rotation):
 
 
 
-def transform_points_custom(txm_mat, points):
+def transform_points2(txm_mat, points):
     """
     Given a 4x4 transformation matrix, transform an array of 3D points.
     Expected point foramt: [[X0,Y0,Z0],..[Xn,Yn,Zn]]
     """
     # Needed foramt: [[X0,..Xn],[Z0,..Zn],[Z0,..Zn]]. So let's transpose
     # the point matrix.
-    points = points.transpose()
+    #points = points.transpose()
     # Add 0s row: [[X0..,Xn],[Y0..,Yn],[Z0..,Zn],[0,..0]]
-    points = np.append(points, np.ones((1, points.shape[1])), axis=0)
+    #points = np.append(points, np.ones((1, points.shape[1])), axis=0)
     # Point transformation
-    points = txm_mat * points
+    points = np.mat(get_matrix(txm_mat.location,txm_mat.rotation)) * points
     # Return all but last row
     return points[0:3].transpose()
 
-def carla_rotation_to_RPY(carla_rotation):
+def _create_bb_points(bounding_box):
     """
-    Convert a carla rotation to a roll, pitch, yaw tuple
-    Considers the conversion from left-handed system (unreal) to right-handed
-    system.
-    :param carla_rotation: the carla rotation
-    :type carla_rotation: carla.Rotation
-    :return: a tuple with 3 elements (roll, pitch, yaw)
-    :rtype: tuple
+    Returns 3D bounding box for a level_object.
     """
-    roll = carla_rotation.roll
-    pitch = -carla_rotation.pitch
-    yaw = -carla_rotation.yaw
 
-    return (roll, pitch, yaw)
+    coords = np.zeros((8, 4))
+    extent = bounding_box.extent
+    coords[0, :] = np.array([extent.x, extent.y, -extent.z, 1])
+    coords[1, :] = np.array([-extent.x, extent.y, -extent.z, 1])
+    coords[2, :] = np.array([-extent.x, -extent.y, -extent.z, 1])
+    coords[3, :] = np.array([extent.x, -extent.y, -extent.z, 1])
+    coords[4, :] = np.array([extent.x, extent.y, extent.z, 1])
+    coords[5, :] = np.array([-extent.x, extent.y, extent.z, 1])
+    coords[6, :] = np.array([-extent.x, -extent.y, extent.z, 1])
+    coords[7, :] = np.array([extent.x, -extent.y, extent.z, 1])
+    return coords
 
 def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp):
     bbox = vertices_from_extension(obj_bbox.extent)
-    rot = obj_transform.rotation
-    if obj_tp == 1:        
-        bbox_transform = carla.Transform(obj_bbox.location, rot)
+    bbox_transform = carla.Transform(obj_bbox.location, obj_transform.rotation)
 
-    elif obj_tp ==2:
-        box_location = obj_transform.location
-        print("rot.yaw", rot.yaw)
-        if -2 < rot.yaw < 2:
-            box_location = carla.Location(obj_transform.location + carla.Location(-0.20, 0.25, 2.5))
-        elif 88 < rot.yaw < 92:
-            box_location = carla.Location(obj_transform.location + carla.Location(-0.25, -0.20, 2.5))
-        elif -88 > rot.yaw > -92:
-            box_location = carla.Location(obj_transform.location + carla.Location(0.25, 0.20, 2.5))
-        elif -178 > rot.yaw > -182 or 178 < rot.yaw < 182:
-            box_location = carla.Location(obj_transform.location + carla.Location(0.20, -0.25, 2.5))
-        else:
-            box_location = carla.Location(
-                obj_bbox.location.x - obj_transform.location.x,
-                obj_bbox.location.y - obj_transform.location.y,
-                obj_bbox.location.z - obj_transform.location.z,
-            )
-        bbox_transform = carla.Transform(box_location, rot)
-
+    if obj_tp == 1:       
+        bbox = transform_points(bbox_transform, bbox)
+        bbox = transform_points(obj_transform, bbox)
     else:
-        box_location = carla.Location(
-            obj_bbox.location.x - obj_transform.location.x,
-            obj_bbox.location.y - obj_transform.location.y,
-            obj_bbox.location.z - obj_transform.location.z,
-        )
-        bbox_transform = carla.Transform(box_location, rot)
+        bbox = transform_points(bbox_transform, bbox)
 
-    bbox = transform_points(bbox_transform, bbox)
-    bbox = transform_points(obj_transform, bbox)
     vertices_pos2d = vertices_to_2d_coords(bbox, intrinsic_mat, extrinsic_mat)
     return vertices_pos2d
-
-
-
 def vertices_from_extension(ext):
     """以自身为原点的八个点的坐标"""
     return np.array(
@@ -318,19 +139,6 @@ def vertices_from_extension(ext):
             [-ext.x, -ext.y, -ext.z],  # Bottom right back
         ]
     )
-
-def vertices_from_extension2(extent):
-    cords = np.zeros((8, 3))
-    cords[0, :] = np.array([extent.x, extent.y, -extent.z])
-    cords[1, :] = np.array([-extent.x, extent.y, -extent.z])
-    cords[2, :] = np.array([-extent.x, -extent.y, -extent.z])
-    cords[3, :] = np.array([extent.x, -extent.y, -extent.z])
-    cords[4, :] = np.array([extent.x, extent.y, extent.z])
-    cords[5, :] = np.array([-extent.x, extent.y, extent.z])
-    cords[6, :] = np.array([-extent.x, -extent.y, extent.z])
-    cords[7, :] = np.array([extent.x, -extent.y, extent.z])
-    return cords
-
 
 def transform_points(transform, points):
     points = points.transpose()
@@ -513,3 +321,155 @@ def custom_calc_projected_2d_bbox(vertices_pos2d, depth_image, object_type=0):
     min_y, max_y = max(0, min_y), min(image_height, max_y)
 
     return [min_x, min_y, max_x, max_y]
+
+
+
+
+def objects_filter(data):
+    environment_objects = data["environment_objects"]
+    agents_data = data["agents_data"]
+    actors = data["actors"]
+    actors = [
+        x
+        for x in actors
+        if x.type_id.find("vehicle") != -1
+        or x.type_id.find("walker") != -1
+        or x.type_id.find("traffic") != -1
+    ]
+    for agent, dataDict in agents_data.items():
+        intrinsic = dataDict["intrinsic"]
+        extrinsic = dataDict["extrinsic"]
+        sensors_data = dataDict["sensor_data"]
+        kitti_datapoints = []
+        carla_datapoints = []
+        rgb_image = to_rgb_array(sensors_data[0])
+        image = rgb_image.copy()
+        depth_data = sensors_data[1]
+
+        data["agents_data"][agent]["visible_environment_objects"] = []
+        for obj in environment_objects:
+            kitti_datapoint, carla_datapoint = is_visible_by_bbox(
+                agent, obj, image, depth_data, intrinsic, extrinsic
+            )
+            if kitti_datapoint is not None:
+                data["agents_data"][agent]["visible_environment_objects"].append(obj)
+                kitti_datapoints.append(kitti_datapoint)
+                carla_datapoints.append(carla_datapoint)
+
+        data["agents_data"][agent]["visible_actors"] = []
+
+        for act in actors:
+            kitti_datapoint, carla_datapoint = is_visible_by_bbox(
+                agent, act, image, depth_data, intrinsic, extrinsic
+            )
+            if kitti_datapoint is not None:
+                data["agents_data"][agent]["visible_actors"].append(act)
+                kitti_datapoints.append(kitti_datapoint)
+                carla_datapoints.append(carla_datapoint)
+
+        data["agents_data"][agent]["rgb_image"] = image
+        data["agents_data"][agent]["kitti_datapoints"] = kitti_datapoints
+        data["agents_data"][agent]["carla_datapoints"] = carla_datapoints
+    return data
+
+
+def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
+    actor_type_list = [
+        carla.Walker,carla.Vehicle,carla.WalkerAIController,
+
+    ]
+    object_type = 1 if type(obj) in actor_type_list \
+    else 0
+    
+    obj_tp = obj_type(obj)
+    if isinstance(obj_tp,str) and obj_tp is "TrafficLight":
+            object_type = 2
+    
+    obj_transform = (
+        obj.transform
+        if isinstance(obj, carla.EnvironmentObject)
+        else obj.get_transform()
+    )
+
+
+    obj_bbox = obj.bounding_box
+    vertices_pos2d = bbox_2d_from_agent(
+            intrinsic, extrinsic, obj_bbox, obj_transform, object_type
+    )
+
+    depth_image = depth_to_array(depth_data)
+    num_visible_vertices, num_vertices_outside_camera = calculate_occlusion_stats(
+        vertices_pos2d, depth_image
+    )
+    if (
+        num_visible_vertices >= MIN_VISIBLE_VERTICES_FOR_RENDER
+        and num_vertices_outside_camera < MAX_OUT_VERTICES_FOR_RENDER
+    ):
+        midpoint = midpoint_from_agent_location(obj_transform.location, extrinsic)
+        #midpoint[:3] = np.identity(3) * midpoint[:3]
+
+        # bbox_2d = calc_projected_2d_bbox(vertices_pos2d)
+        
+        
+        bbox_2d = custom_calc_projected_2d_bbox(
+            vertices_pos2d, depth_image, object_type
+        )
+        rotation_y = (
+            get_relative_rotation_y(
+                agent.get_transform().rotation, obj_transform.rotation
+            )
+            % math.pi
+        )
+
+        ext = obj.bounding_box.extent
+        truncated = num_vertices_outside_camera / 8
+        if num_visible_vertices >= 6:
+            occluded = 0
+        elif num_visible_vertices >= 4:
+            occluded = 1
+        else:
+            occluded = 2
+
+        velocity = (
+            "0 0 0"
+            if isinstance(obj, carla.EnvironmentObject)
+            else "{} {} {}".format(
+                obj.get_velocity().x, obj.get_velocity().y, obj.get_velocity().z
+            )
+        )
+        acceleration = (
+            "0 0 0"
+            if isinstance(obj, carla.EnvironmentObject)
+            else "{} {} {}".format(
+                obj.get_acceleration().x,
+                obj.get_acceleration().y,
+                obj.get_acceleration().z,
+            )
+        )
+        angular_velocity = (
+            "0 0 0"
+            if isinstance(obj, carla.EnvironmentObject)
+            else "{} {} {}".format(
+                obj.get_angular_velocity().x,
+                obj.get_angular_velocity().y,
+                obj.get_angular_velocity().z,
+            )
+        )
+        # draw_3d_bounding_box(rgb_image, vertices_pos2d)
+
+        kitti_data = KittiDescriptor()
+        kitti_data.set_truncated(truncated)
+        kitti_data.set_occlusion(occluded)
+        kitti_data.set_bbox(bbox_2d)
+        kitti_data.set_3d_object_dimensions(ext)
+        kitti_data.set_type(obj_tp)
+        kitti_data.set_3d_object_location(midpoint)
+        kitti_data.set_rotation_y(rotation_y)
+
+        carla_data = CarlaDescriptor()
+        carla_data.set_type(obj_tp)
+        carla_data.set_velocity(velocity)
+        carla_data.set_acceleration(acceleration)
+        carla_data.set_angular_velocity(angular_velocity)
+        return kitti_data, carla_data
+    return None, None
