@@ -6,7 +6,7 @@ import logging
 import numpy as np
 
 from config import config_to_trans
-from data_utils import camera_intrinsic, filter_by_distance, get_matrix
+from data_utils import camera_intrinsic, filter_by_distance
 import sys
 import os
 

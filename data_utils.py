@@ -356,10 +356,6 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
     obj_tp = obj_type(obj)
     if isinstance(obj_tp,str) and obj_tp is "TrafficLight":
             object_type = 2
-    
-    print("{} {}".format(type(obj_tp),type(object_type)))
-    print("{} {}".format(obj_tp, object_type) )
-    print("")
 
     obj_transform = (
         obj.transform
