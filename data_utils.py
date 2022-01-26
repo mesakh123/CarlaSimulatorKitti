@@ -28,13 +28,13 @@ WINDOW_HEIGHT = cfg["SENSOR_CONFIG"]["DEPTH_RGB"]["ATTRIBUTE"]["image_size_y"]
 KITTI_CLASSES = [""]
 
 
-def get_matrix(location, rotation):
+def get_matrix(transform):
     """
     Creates matrix from carla transform.
     """
 
-    # rotation = transform.rotation
-    # location = transform.location
+    rotation = transform.rotation
+    location = transform.location
     c_y = np.cos(np.radians(rotation.yaw))
     s_y = np.sin(np.radians(rotation.yaw))
     c_r = np.cos(np.radians(rotation.roll))
@@ -42,6 +42,9 @@ def get_matrix(location, rotation):
     c_p = np.cos(np.radians(rotation.pitch))
     s_p = np.sin(np.radians(rotation.pitch))
     matrix = np.matrix(np.identity(4))
+    matrix[0, 3] = location.x
+    matrix[1, 3] = location.y
+    matrix[2, 3] = location.z
     matrix[0, 0] = c_p * c_y
     matrix[0, 1] = c_y * s_p * s_r - s_y * c_r
     matrix[0, 2] = -c_y * s_p * c_r - s_y * s_r
@@ -51,12 +54,9 @@ def get_matrix(location, rotation):
     matrix[2, 0] = s_p
     matrix[2, 1] = -c_p * s_r
     matrix[2, 2] = c_p * c_r
-    # Last column
-    matrix[0, 3] = location.x
-    matrix[1, 3] = location.y
-    matrix[2, 3] = location.z
-    # matrix[3, 3] = 1 # already set (identity)
     return matrix
+
+
 
 
 def obj_type(obj):
@@ -81,40 +81,46 @@ def get_relative_rotation_y(agent_rotation, obj_rotation):
 
 
 
-def transform_points2(txm_mat, points):
+def transform_points_custom(txm_mat, points):
     """
     Given a 4x4 transformation matrix, transform an array of 3D points.
     Expected point foramt: [[X0,Y0,Z0],..[Xn,Yn,Zn]]
     """
     # Needed foramt: [[X0,..Xn],[Z0,..Zn],[Z0,..Zn]]. So let's transpose
     # the point matrix.
-    #points = points.transpose()
+    points = points.transpose()
     # Add 0s row: [[X0..,Xn],[Y0..,Yn],[Z0..,Zn],[0,..0]]
-    #points = np.append(points, np.ones((1, points.shape[1])), axis=0)
+    points = np.append(points, np.ones((1, points.shape[1])), axis=0)
     # Point transformation
-    points = np.mat(get_matrix(txm_mat.location,txm_mat.rotation)) * points
+    points = txm_mat * points
     # Return all but last row
     return points[0:3].transpose()
 
-def _create_bb_points(bounding_box):
+def carla_rotation_to_RPY(carla_rotation):
     """
-    Returns 3D bounding box for a level_object.
+    Convert a carla rotation to a roll, pitch, yaw tuple
+    Considers the conversion from left-handed system (unreal) to right-handed
+    system.
+    :param carla_rotation: the carla rotation
+    :type carla_rotation: carla.Rotation
+    :return: a tuple with 3 elements (roll, pitch, yaw)
+    :rtype: tuple
     """
+    roll = carla_rotation.roll
+    pitch = -carla_rotation.pitch
+    yaw = -carla_rotation.yaw
 
-    coords = np.zeros((8, 4))
-    extent = bounding_box.extent
-    coords[0, :] = np.array([extent.x, extent.y, -extent.z, 1])
-    coords[1, :] = np.array([-extent.x, extent.y, -extent.z, 1])
-    coords[2, :] = np.array([-extent.x, -extent.y, -extent.z, 1])
-    coords[3, :] = np.array([extent.x, -extent.y, -extent.z, 1])
-    coords[4, :] = np.array([extent.x, extent.y, extent.z, 1])
-    coords[5, :] = np.array([-extent.x, extent.y, extent.z, 1])
-    coords[6, :] = np.array([-extent.x, -extent.y, extent.z, 1])
-    coords[7, :] = np.array([extent.x, -extent.y, extent.z, 1])
-    return coords
+    return (roll, pitch, yaw)
+
+def transform_points_custom(transform, points):
+    points = points.transpose()
+    # [[X0..,Xn],[Y0..,Yn],[Z0..,Zn],[1,..1]]  (4,8)
+    points = np.append(points, np.ones((1, points.shape[1])), axis=0)
+    points = np.mat(transform.get_matrix()) * points
+    return points[0:3].transpose()
 
 def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp):
-    bbox = vertices_from_extension(obj_bbox.extent)
+    bbox = vertices_from_extension2(obj_bbox.extent)
     bbox_transform = carla.Transform(obj_bbox.location, obj_transform.rotation)
 
     if obj_tp == 1:       
@@ -125,6 +131,30 @@ def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, ob
 
     vertices_pos2d = vertices_to_2d_coords(bbox, intrinsic_mat, extrinsic_mat)
     return vertices_pos2d
+
+
+
+def bbox_2d_from_agent_ori(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp):
+    bbox = vertices_from_extension(obj_bbox.extent)
+    if obj_tp == 1:
+        bbox_transform = carla.Transform(obj_bbox.location, obj_bbox.rotation)
+        bbox = transform_points(bbox_transform, bbox)
+    else:
+        box_location = carla.Location(obj_bbox.location.x-obj_transform.location.x,
+                                      obj_bbox.location.y-obj_transform.location.y,
+                                      obj_bbox.location.z-obj_transform.location.z)
+        box_rotation = obj_bbox.rotation
+        bbox_transform = carla.Transform(box_location, box_rotation)
+        bbox = transform_points(bbox_transform, bbox)
+    # 获取bbox在世界坐标系下的点的坐标
+    bbox = transform_points(obj_transform, bbox)
+    # 将世界坐标系下的bbox八个点转换到二维图片中
+    vertices_pos2d = vertices_to_2d_coords(bbox, intrinsic_mat, extrinsic_mat)
+    return vertices_pos2d
+
+
+
+
 def vertices_from_extension(ext):
     """以自身为原点的八个点的坐标"""
     return np.array(
@@ -139,6 +169,19 @@ def vertices_from_extension(ext):
             [-ext.x, -ext.y, -ext.z],  # Bottom right back
         ]
     )
+
+def vertices_from_extension2(extent):
+    cords = np.zeros((8, 3))
+    cords[0, :] = np.array([extent.x, extent.y, -extent.z])
+    cords[1, :] = np.array([-extent.x, extent.y, -extent.z])
+    cords[2, :] = np.array([-extent.x, -extent.y, -extent.z])
+    cords[3, :] = np.array([extent.x, -extent.y, -extent.z])
+    cords[4, :] = np.array([extent.x, extent.y, extent.z])
+    cords[5, :] = np.array([-extent.x, extent.y, extent.z])
+    cords[6, :] = np.array([-extent.x, -extent.y, extent.z])
+    cords[7, :] = np.array([extent.x, -extent.y, extent.z])
+    return cords
+
 
 def transform_points(transform, points):
     points = points.transpose()
@@ -385,6 +428,10 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
     if isinstance(obj_tp,str) and obj_tp is "TrafficLight":
             object_type = 2
     
+    print("{} {}".format(type(obj_tp),type(object_type)))
+    print("{} {}".format(obj_tp, object_type) )
+    print("")
+
     obj_transform = (
         obj.transform
         if isinstance(obj, carla.EnvironmentObject)
