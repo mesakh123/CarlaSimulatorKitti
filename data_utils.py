@@ -101,14 +101,14 @@ def vertices_from_extension(ext):
 
 def vertices_from_extension2(extent):
     cords = np.zeros((8, 3))
-    cords[0, :] = np.array([extent.x, extent.y, -extent.z])
-    cords[1, :] = np.array([-extent.x, extent.y, -extent.z])
-    cords[2, :] = np.array([-extent.x, -extent.y, -extent.z])
-    cords[3, :] = np.array([extent.x, -extent.y, -extent.z])
-    cords[4, :] = np.array([extent.x, extent.y, extent.z])
-    cords[5, :] = np.array([-extent.x, extent.y, extent.z])
-    cords[6, :] = np.array([-extent.x, -extent.y, extent.z])
-    cords[7, :] = np.array([extent.x, -extent.y, extent.z])
+    cords[0, :] = np.array([extent.x, extent.y, -extent.z]) # Top left front 
+    cords[1, :] = np.array([-extent.x, extent.y, -extent.z])# Top left back 
+    cords[2, :] = np.array([-extent.x, -extent.y, -extent.z])# Top right front 
+    cords[3, :] = np.array([extent.x, -extent.y, -extent.z])# Top right back 
+    cords[4, :] = np.array([extent.x, extent.y, extent.z])# Bottom left front 
+    cords[5, :] = np.array([-extent.x, extent.y, extent.z])# Bottom left back 
+    cords[6, :] = np.array([-extent.x, -extent.y, extent.z])# Bottom right front 
+    cords[7, :] = np.array([extent.x, -extent.y, extent.z])# Bottom right back 
     return cords
 
 
@@ -121,18 +121,23 @@ def transform_points(transform, points):
 
 
 def vertices_to_2d_coords(bbox, intrinsic_mat, extrinsic_mat):
-    """将bbox在世界坐标系中的点投影到该相机获取二维图片的坐标和点的深度"""
+    """ 
+    Accepts a bbox which is a list of 3d world coordinates and returns a list 
+    of the 2d pixel coordinates of each vertex. 
+    This is represented as a tuple (y, x, d) where y and x are the 2d pixel coordinates
+    while d is the depth. The depth can be used for filtering visible vertices.
+    """
     vertices_pos2d = []
     for vertex in bbox:
-        # 获取点在world坐标系中的向量
+        # Get vector from world coor system
         pos_vector = vertex_to_world_vector(vertex)
-        # 将点的world坐标转换到相机坐标系中
+        # Camera coordinates
         transformed_3d_pos = proj_to_camera(pos_vector, extrinsic_mat)
-        # 将点的相机坐标转换为二维图片的坐标
+        # 2d pixel coordinates
         pos2d = proj_to_2d(transformed_3d_pos, intrinsic_mat)
-        # 点实际的深度
+        # Actual rendered depth
         vertex_depth = pos2d[2]
-        # 点在图片中的坐标
+        # Coordinate of points on image
         x_2d, y_2d = pos2d[0], pos2d[1]
         vertices_pos2d.append((y_2d, x_2d, vertex_depth))
     return vertices_pos2d
@@ -151,11 +156,13 @@ def vertex_to_world_vector(vertex):
 
 
 def calculate_occlusion_stats(vertices_pos2d, depth_image):
-    """作用：筛选bbox八个顶点中实际可见的点"""
+    """
+    Filtering 8 points of bbox visible vertices
+    """
     num_visible_vertices = 0
     num_vertices_outside_camera = 0
     for y_2d, x_2d, vertex_depth in vertices_pos2d:
-        # 点在可见范围中，并且没有超出图片范围
+        # if the point is in front of the camera but not too far away
         if MAX_RENDER_DEPTH_IN_METERS > vertex_depth > 0 and point_in_canvas(
             (y_2d, x_2d)
         ):
@@ -196,7 +203,13 @@ def point_is_occluded(point, vertex_depth, depth_image):
 
 
 def midpoint_from_agent_location(location, extrinsic_mat):
-    """将agent在世界坐标系中的中心点转换到相机坐标系下"""
+    """
+    Transform agent world coordinate system center point into camera coordinate system
+    Calculate the midpoint of the bottom chassis
+    This is used since kitti treats this point as the location of the car
+
+    """
+   
     midpoint_vector = np.array(
         [[location.x], [location.y], [location.z], [1.0]]  # [[X,  # Y,  # Z,  # 1.0]]
     )
@@ -214,8 +227,10 @@ def camera_intrinsic(width, height):
 
 
 def proj_to_camera(pos_vector, extrinsic_mat):
-    """作用：将点的world坐标转换到相机坐标系中"""
-    # inv求逆矩阵
+    """
+    Convert world coordinate system point into camera coordinate system
+    """
+    # inv
     transformed_3d_pos = np.dot(inv(extrinsic_mat), pos_vector)
     return transformed_3d_pos
 
@@ -256,7 +271,11 @@ def distance_between_locations(location1, location2):
 
 
 def calc_projected_2d_bbox(vertices_pos2d):
-    """根据八个顶点的图片坐标，计算二维bbox的左上和右下的坐标值"""
+    """ 
+    Takes in all vertices in pixel projection and calculates min and max of all x and y coordinates.
+    Returns left top, right bottom pixel coordinates for the 2d bounding box as a list of four values.
+    Note that vertices_pos2d contains a list of (y_pos2d, x_pos2d) tuples, or None
+    """
     legal_pos2d = list(filter(lambda x: x is not None, vertices_pos2d))
     y_coords, x_coords = [int(x[0][0]) for x in legal_pos2d], [
         int(x[1][0]) for x in legal_pos2d
@@ -278,7 +297,11 @@ def degrees_to_radians(degrees):
 
 
 def custom_calc_projected_2d_bbox(vertices_pos2d, depth_image, object_type=0):
-    """根据八个顶点的图片坐标，计算二维bbox的左上和右下的坐标值"""
+    """ 
+    Takes in all vertices in pixel projection and calculates min and max of all x and y coordinates.
+    Returns left top, right bottom pixel coordinates for the 2d bounding box as a list of four values.
+    Note that vertices_pos2d contains a list of (y_pos2d, x_pos2d) tuples, or None
+    """
     legal_pos2d = list(filter(lambda x: x is not None, vertices_pos2d))
     y_coords, x_coords = [int(x[0][0]) for x in legal_pos2d], [
         int(x[1][0]) for x in legal_pos2d
@@ -294,6 +317,19 @@ def custom_calc_projected_2d_bbox(vertices_pos2d, depth_image, object_type=0):
 
     return [min_x, min_y, max_x, max_y]
 
+
+def legal_bbox(bbox, obj_tp):
+
+    min_area = 50
+    area = (bbox[2]-bbox[0]) * (bbox[3]-bbox[1])
+    filter_list = {
+        "TrafficLight":70
+    }
+
+    if obj_tp in filter_list.keys():
+        min_area = filter_list[obj_tp]    
+
+    return True if area > min_area else False
 
 
 
@@ -386,6 +422,11 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
         bbox_2d = custom_calc_projected_2d_bbox(
             vertices_pos2d, depth_image, object_type
         )
+
+        if not legal_bbox(bbox_2d, str(obj_tp)):
+            return None, None
+
+
         rotation_y = (
             get_relative_rotation_y(
                 agent.get_transform().rotation, obj_transform.rotation

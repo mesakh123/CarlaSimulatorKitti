@@ -23,7 +23,8 @@ from math import pi
 
 class KittiDescriptor:
     """
-    Kitti格式的label类
+    This class is responsible for storing a single datapoint 
+    for the kitti 3d object detection task
     """
     def __init__(self, type=None, bbox=None, dimensions=None, location=None, rotation_y=None, extent=None):
         self.type = type
@@ -104,6 +105,7 @@ class KittiDescriptor:
             # we need to subtract the bbox extent in the height direction when adding location of pedestrian.
             z -= self.extent[0]
 
+        #self.location = " ".join(map(str, [-x, -y, z]))
         self.location = " ".join(map(str, [y, -z, x]))
 
     def set_rotation_y(self, rotation_y: float):
