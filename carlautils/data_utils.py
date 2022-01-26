@@ -55,6 +55,7 @@ def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, ob
     if obj_tp == 1:       
         bbox = transform_points(bbox_transform, bbox)
         bbox = transform_points(obj_transform, bbox)
+
     else:
         bbox = transform_points(bbox_transform, bbox)
 
@@ -383,15 +384,17 @@ def objects_filter(data):
 
 def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
     actor_type_list = [
-        carla.Walker,carla.Vehicle,carla.WalkerAIController,
+        carla.Walker,carla.Vehicle,carla.WalkerAIController
 
     ]
     object_type = 1 if type(obj) in actor_type_list \
     else 0
     
     obj_tp = obj_type(obj)
-    if isinstance(obj_tp,str) and obj_tp is "TrafficLight":
+    if isinstance(obj_tp,str) and obj_tp == "TrafficLight":
             object_type = 2
+    if str(obj_tp) == "TrafficSign":
+            object_type = 3
 
     obj_transform = (
         obj.transform

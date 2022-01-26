@@ -23,7 +23,7 @@ try:
     )
 except IndexError:
     raise RuntimeError("cannot import carla, make sure numpy package is installed")
-import carla
+
 from carla import ColorConverter as cc
 
 from agents.navigation.behavior_agent import (
