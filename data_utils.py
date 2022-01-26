@@ -28,37 +28,6 @@ WINDOW_HEIGHT = cfg["SENSOR_CONFIG"]["DEPTH_RGB"]["ATTRIBUTE"]["image_size_y"]
 KITTI_CLASSES = [""]
 
 
-def get_matrix(transform):
-    """
-    Creates matrix from carla transform.
-    """
-
-    rotation = transform.rotation
-    location = transform.location
-    c_y = np.cos(np.radians(rotation.yaw))
-    s_y = np.sin(np.radians(rotation.yaw))
-    c_r = np.cos(np.radians(rotation.roll))
-    s_r = np.sin(np.radians(rotation.roll))
-    c_p = np.cos(np.radians(rotation.pitch))
-    s_p = np.sin(np.radians(rotation.pitch))
-    matrix = np.matrix(np.identity(4))
-    matrix[0, 3] = location.x
-    matrix[1, 3] = location.y
-    matrix[2, 3] = location.z
-    matrix[0, 0] = c_p * c_y
-    matrix[0, 1] = c_y * s_p * s_r - s_y * c_r
-    matrix[0, 2] = -c_y * s_p * c_r - s_y * s_r
-    matrix[1, 0] = s_y * c_p
-    matrix[1, 1] = s_y * s_p * s_r + c_y * c_r
-    matrix[1, 2] = -s_y * s_p * c_r + c_y * s_r
-    matrix[2, 0] = s_p
-    matrix[2, 1] = -c_p * s_r
-    matrix[2, 2] = c_p * c_r
-    return matrix
-
-
-
-
 def obj_type(obj):
     if isinstance(obj, carla.EnvironmentObject):
         return obj.type
@@ -78,46 +47,6 @@ def get_relative_rotation_y(agent_rotation, obj_rotation):
     rot_agent = agent_rotation.yaw
     rot_car = obj_rotation.yaw
     return degrees_to_radians(rot_agent - rot_car)
-
-
-
-def transform_points_custom(txm_mat, points):
-    """
-    Given a 4x4 transformation matrix, transform an array of 3D points.
-    Expected point foramt: [[X0,Y0,Z0],..[Xn,Yn,Zn]]
-    """
-    # Needed foramt: [[X0,..Xn],[Z0,..Zn],[Z0,..Zn]]. So let's transpose
-    # the point matrix.
-    points = points.transpose()
-    # Add 0s row: [[X0..,Xn],[Y0..,Yn],[Z0..,Zn],[0,..0]]
-    points = np.append(points, np.ones((1, points.shape[1])), axis=0)
-    # Point transformation
-    points = txm_mat * points
-    # Return all but last row
-    return points[0:3].transpose()
-
-def carla_rotation_to_RPY(carla_rotation):
-    """
-    Convert a carla rotation to a roll, pitch, yaw tuple
-    Considers the conversion from left-handed system (unreal) to right-handed
-    system.
-    :param carla_rotation: the carla rotation
-    :type carla_rotation: carla.Rotation
-    :return: a tuple with 3 elements (roll, pitch, yaw)
-    :rtype: tuple
-    """
-    roll = carla_rotation.roll
-    pitch = -carla_rotation.pitch
-    yaw = -carla_rotation.yaw
-
-    return (roll, pitch, yaw)
-
-def transform_points_custom(transform, points):
-    points = points.transpose()
-    # [[X0..,Xn],[Y0..,Yn],[Z0..,Zn],[1,..1]]  (4,8)
-    points = np.append(points, np.ones((1, points.shape[1])), axis=0)
-    points = np.mat(transform.get_matrix()) * points
-    return points[0:3].transpose()
 
 def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp):
     bbox = vertices_from_extension2(obj_bbox.extent)
@@ -292,7 +221,7 @@ def proj_to_camera(pos_vector, extrinsic_mat):
 
 
 def proj_to_2d(camera_pos_vector, intrinsic_mat):
-    """将相机坐标系下的点的3d坐标投影到图片上"""
+
     cords_x_y_z = camera_pos_vector[:3, :]
     cords_y_minus_z_x = np.concatenate(
         [cords_x_y_z[1, :], -cords_x_y_z[2, :], cords_x_y_z[0, :]]
