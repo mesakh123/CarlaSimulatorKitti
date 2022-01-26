@@ -27,17 +27,21 @@ import carla
 class SynchronyModel:
     def __init__(self, cfg, args=None):
         self.cfg = cfg
-        if args:
-            self.client = carla.Client(str(args.host), int(args.port))
+        self.args = args
+        if self.args:
+            self.client = carla.Client(str(self.args.host), int(self.args.port))
         else:
             self.client = carla.Client("127.0.0.1", 2000)
         self.client.set_timeout(4.0)
-        self.world = self.client.get_world()
+        
+        self.world = self.get_world()
+        print("Loading map : ",self.world.get_map().name)
+        
         self.traffic_manager = self.client.get_trafficmanager()
         self.init_settings = None
         self.frame = None
         self.actors = {"non_agents": [], "walkers": [], "agents": [], "sensors": {}}
-        self.data = {"sensor_data": {}, "environment_data": None}  # 记录每一帧的数据
+        self.data = {"sensor_data": {}, "environment_data": None}  # Save data
         self.player = None
         self.image_width = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"]
         self.image_height = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"][
@@ -45,6 +49,16 @@ class SynchronyModel:
         ]
         self.fov = self.cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["fov"]
         self.destination = None
+
+    def get_world(self):
+        if self.args:
+            try:
+                self.client.load_world(self.args.town)
+                self.client.reload_world()
+            except:
+                self.client.load_world("Town01")
+                self.client.reload_world()
+        return self.client.get_world()
 
     def set_synchrony(self):
         self.init_settings = self.world.get_settings()
@@ -67,10 +81,17 @@ class SynchronyModel:
         self.world.apply_settings(self.init_settings)
 
     def spawn_actors(self):
+
         num_of_vehicles = self.cfg["CARLA_CONFIG"]["NUM_OF_VEHICLES"]
         num_of_walkers = self.cfg["CARLA_CONFIG"]["NUM_OF_WALKERS"]
+        try:
+            num_of_vehicles = self.args.vehicle_num
+            num_of_vehicles = self.args.walker_num
+        except:
+            num_of_vehicles = self.cfg["CARLA_CONFIG"]["NUM_OF_VEHICLES"]
+            num_of_walkers = self.cfg["CARLA_CONFIG"]["NUM_OF_WALKERS"]
 
-        # 生成车辆actors
+        # Generate vehicle actors
         blueprints = self.world.get_blueprint_library().filter("vehicle.*")
         blueprints = sorted(blueprints, key=lambda bp: bp.id)
         spawn_points = self.world.get_map().get_spawn_points()
@@ -108,7 +129,7 @@ class SynchronyModel:
                 else:
                     self.actors["non_agents"].append(response.actor_id)
 
-        # 生成行人actors
+        # Generate walker actors
         blueprintsWalkers = self.world.get_blueprint_library().filter(
             "walker.pedestrian.*"
         )
