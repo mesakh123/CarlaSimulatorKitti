@@ -1,7 +1,7 @@
 from DataSave import DataSave
-from SynchronyModel import SynchronyModel
+from carlautils.SynchronyModel import SynchronyModel
 from config import cfg_from_yaml_file
-from data_utils import objects_filter
+from carlautils.data_utils import objects_filter
 from utils.custom_classes import *
 
 

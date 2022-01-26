@@ -1,13 +1,14 @@
 import queue
-import sys
+
 import random
 import logging
 
 import numpy as np
 
 from config import config_to_trans
-from data_utils import camera_intrinsic, filter_by_distance
+from .data_utils import camera_intrinsic, filter_by_distance
 import sys
+sys.path.append("..") # Adds higher directory to python modules path.
 import os
 
 sys.path.append(

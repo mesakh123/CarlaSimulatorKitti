@@ -1,13 +1,13 @@
 import sys
-
+sys.path.append("..") # Adds higher directory to python modules path.
 import numpy as np
 from numpy.linalg import inv
 
 from config import cfg_from_yaml_file
-from data_descriptor import KittiDescriptor, CarlaDescriptor
-from image_converter import depth_to_array, to_rgb_array
+from .data_descriptor import KittiDescriptor, CarlaDescriptor
+from .image_converter import depth_to_array, to_rgb_array
 import math
-from visual_utils import draw_3d_bounding_box
+from utils.visual_utils import draw_3d_bounding_box
 
 sys.path.append(
     "/opt/carla-simulator/PythonAPI/carla/dist/carla-0.9.12-py3.7-linux-x86_64.egg"
@@ -32,11 +32,11 @@ def obj_type(obj):
     if isinstance(obj, carla.EnvironmentObject):
         return obj.type
     else:
-        if obj.type_id.find("walker") is not -1:
+        if obj.type_id.find("walker") != -1:
             return "Pedestrian"
-        if obj.type_id.find("vehicle") is not -1:
+        if obj.type_id.find("vehicle") != -1:
             return "Vehicles"
-        if obj.type_id.find("traffic_light") is not -1:
+        if obj.type_id.find("traffic_light") != -1:
             return "TrafficLight"
         return "None"
 
@@ -320,7 +320,7 @@ def custom_calc_projected_2d_bbox(vertices_pos2d, depth_image, object_type=0):
 
 def legal_bbox(bbox, obj_tp):
 
-    min_area = 50
+    min_area = 40
     area = (bbox[2]-bbox[0]) * (bbox[3]-bbox[1])
     filter_list = {
         "TrafficLight":70
