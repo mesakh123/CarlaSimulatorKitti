@@ -1,10 +1,10 @@
 from config import config_to_trans
-from export_utils import *
+from carlautils.export_utils import *
 import time
 
 
 class DataSave:
-    def __init__(self, cfg, kitti_only=False):
+    def __init__(self, cfg, args = None):
         self.cfg = cfg
         self.OUTPUT_FOLDER = None
         self.LIDAR_PATH = None
@@ -12,12 +12,27 @@ class DataSave:
         self.CARLA_LABEL_PATH = None
         self.IMAGE_PATH = None
         self.CALIBRATION_PATH = None
-        self.kitti_only = kitti_only
+        self.IMAGE_EXT = self._get_image_ext(args)
+        self.kitti_only = True if args and args.kitti_only else False
+        
         self._generate_path(self.cfg["SAVE_CONFIG"]["ROOT_PATH"])
         self.captured_frame_no = self._current_captured_frame_num()
 
+    def _get_image_ext(self, args = None):
+        image_filter = ['jpg','jpeg','png']
+
+        if args :
+            try:
+                if str(args.image_type).lower() in image_filter:
+                    return str(args.image_type).lower()
+                else:
+                    raise Exception
+            except:
+                return "png"
+        return "png"
+
     def _generate_path(self, root_path):
-        """生成数据存储的路径"""
+        """Save path of generated data"""
         PHASE = "training"
         self.OUTPUT_FOLDER = os.path.join(root_path, PHASE)
         folders = ["calib", "data", "labels", "carla_label", "velodyne"]
@@ -34,7 +49,7 @@ class DataSave:
         self.CARLA_LABEL_PATH = os.path.join(
             self.OUTPUT_FOLDER, "carla_label/{0:06}.txt"
         )
-        self.IMAGE_PATH = os.path.join(self.OUTPUT_FOLDER, "data/{0:06}.png")
+        self.IMAGE_PATH = os.path.join(self.OUTPUT_FOLDER, "data/{0:06}."+self.IMAGE_EXT)
         self.CALIBRATION_PATH = os.path.join(self.OUTPUT_FOLDER, "calib/{0:06}.txt")
 
     def _current_captured_frame_num(self):

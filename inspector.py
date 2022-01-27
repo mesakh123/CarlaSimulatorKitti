@@ -1,8 +1,8 @@
 from DataSave import DataSave
-from SynchronyModel import SynchronyModel
+from carlautils.SynchronyModel import SynchronyModel
 from config import cfg_from_yaml_file
-from data_utils import objects_filter
-from utils.custom_classes import *
+from carlautils.data_utils import objects_filter
+
 
 
 import logging
@@ -23,7 +23,7 @@ try:
     )
 except IndexError:
     raise RuntimeError("cannot import carla, make sure numpy package is installed")
-import carla
+
 from carla import ColorConverter as cc
 
 from agents.navigation.behavior_agent import (
@@ -46,7 +46,6 @@ dtsave = None
 step = 0
 STEP = 0
 
-
 def save_data():
     global save, model, dtsave, step, STEP
     while True:
@@ -57,7 +56,7 @@ def save_data():
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
                 save = False
-                print("Step {} saved".format(step))
+                print("Step {} saved".format(step/STEP))
 
 
 def main(args):
@@ -92,14 +91,7 @@ def main(args):
 
         hud = HUD(image_width, image_height)
 
-        classes = {
-            "kitti": KITTI_CLASSES,
-            "custom": CUSTOM_CLASSES,
-            "coco": COCO_CLASSES,
-        }
-        cls = classes[args.classes] if args.classes in classes else classes["kitti"]
-
-        world = World(model.world, hud, args, model.player, cls)
+        world = World(model.world, hud, args, model.player)
 
         controller = KeyboardControl(world)
         if args.agent == "Basic":
@@ -148,7 +140,10 @@ def main(args):
             settings.synchronous_mode = False
             settings.fixed_delta_seconds = None
             world.world.apply_settings(settings)
-            world.destroy()
+            try:
+                world.destroy()
+            except:
+                pass
 
         th.join()
         pygame.quit()
@@ -259,9 +254,9 @@ if __name__ == "__main__":
         "-c",
         "--classes",
         type=str,
-        choices=["kitti", "coco", "custom"],
+        choices=["carla", "kitti", "coco", "custom"],
         help="Choose one of the classes list (default: kitti) ",
-        default="kitti",
+        default="carla",
     )
     args = argparser.parse_args()
 
