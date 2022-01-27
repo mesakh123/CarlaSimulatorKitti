@@ -10,31 +10,9 @@ step = 0
 STEP = 10
 model = None
 dtsave = None
-def save_data():
-    global step, STEP, model, dtsave
-    while True:
-        if step % STEP == 0:
-            time.sleep(1)
-            with threading.Lock():
-                data = model.tick()
-                data = objects_filter(data)
-                dtsave.save_training_files(data)
-                print("Step {} saved".format(step/STEP))
-
-
-
-
 
 th_lock = threading.Lock()
-count = 0 
-def save_data2(data, dtsave):
-    global step, STEP, count
-    with th_lock:
-        data = objects_filter(data)
-        dtsave.save_training_files(data)
-    print("{} saved".format(count))
-    count+=1
-    
+
 def save_data_new(dtsave, data):
     with th_lock:
         dtsave.save_training_files(data)
