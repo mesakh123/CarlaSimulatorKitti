@@ -5,27 +5,22 @@ Pygame CARLA Simulator to produce KITTI 2D/3D object detection
 Source Code : https://github.com/mmmmaomao/DataGenerator
 
 **Folder Format**
-
-dataset |
-training
-
-      |\_\_ calib/ # camera and lidar coeff
-
-      |\_\_ image/ # RGB image
-
-      |\_\_ label/ # object 的标签
-
-      |\_\_ velodyne/ # 激光雷达的测量数据
-
-      |\_\_ train.txt
-
-      |\_\_ trainval.txt
-
-      |\_\_ val.txt
+```
+|-- dataset
+    |-- training
+    |   |-- calib/ # camera and lidar coeff
+    |   |-- image/ # RGB image
+    |   |-- labels/ # KITTI format image information
+    |   |-- velodyne/ # 激光雷达的测量数据
+    |   |-- train.txt
+    |   |-- trainval.txt
+    |   |-- val.txt
 
 ```
-label：
-#Values    Name      Description
+
+**KITTI label format**
+```
+ Values    Name      Description
 ----------------------------------------------------------------------------
    1    type         Describes the type of object: 'Car','Pedestrian',
    					 'TrafficSigns', etc.
@@ -45,12 +40,13 @@ label：
 ```
 
 **label type**
-
-label 标定的目标主要分为两类，第一类是我们自己生成的 actors(Car 和 Pedestrian)；第二类是地图中存在的环境目标(None，Buildings，Fences，Other，Pedestrians，Poles，RoadLines，Roads，Sidewalks，TrafficSigns，Vegetation，Vehicles，Walls，Sky，Ground，Bridge，RailTrack，GuardRail，TrafficLight，Static，Dynamic，Water，Terrain)
+Two types of labels:
+ 1. Actors : Car, Pedestrian
+ 2. Environment : None，Buildings，Fences，Other，Pedestrians，Poles，RoadLines，Roads，Sidewalks，TrafficSigns，Vegetation，Vehicles，Walls，Sky，Ground，Bridge，RailTrack，GuardRail，TrafficLight，Static，Dynamic，Water，Terrain
 
 **Usage**
 
-Carla 版本：carla 0.9.12
+Carla Version：carla 0.9.12
 
 Collecting Data
 
@@ -70,7 +66,6 @@ Collecting data and show Pygame
 python3 inspector.py --loop
 ```
 
-
 To enable predict on local model (put model on models/yolox_s.onnx)
 
 ```
@@ -85,22 +80,25 @@ python3 inspector.py --loop --predict
 To enable predict (remote API, i.e 'http://<model_host>:<model_port>/predict')
 
 ```
+
 python3 inference.py  --loop  --predict --model-host=0.0.0.0 --model-port=7777
+
 ```
 
-SynchronyModel.py，场景类，负责建立 client，设置 server，生成 actors，驱动 server 计算并获取数据
+**CarlaUtils**
+SynchronyModel.py，Build client，setup server，generate actors，Generate data from server
 
-data_utils.py，包含点坐标转换、生成 label 等工具函数
+data_utils.py， functions of coordinate transform、generate label
 
-data_descriptor.py, KITTI 格式的描述类
+data_descriptor.py, KITTI format descripter
 
-DataSave.py，数据保存类，生成保存数据路径，保存数据
+DataSave.py， object class to generate and save data folder
 
-export_utils，保存数据的工具函数
+export_utils，saving data utils
 
-image_converter.py, 图片格式转换函数
+image_converter.py, image format converter
 
-visual_utils，可视化工具函数
+visual_utils，visualization tools
 
 ### On Progress
 

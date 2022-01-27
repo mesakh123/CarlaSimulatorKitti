@@ -47,7 +47,7 @@ def main(args):
                 data = objects_filter(data)
                 pool.apply_async(save_data_new, args=(dtsave, data))
                 
-                print(step / STEP, (int(time.time() - start) ))
+                print("Saved file : {}".format( int(step / STEP)))
             else:
                 model.world.tick()
             step += 1
