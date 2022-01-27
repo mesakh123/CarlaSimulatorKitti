@@ -1,8 +1,10 @@
 from config import config_to_trans
-from export_utils import *
+from carlautils.export_utils import *
+import time
+
 
 class DataSave:
-    def __init__(self, cfg):
+    def __init__(self, cfg, args = None):
         self.cfg = cfg
         self.OUTPUT_FOLDER = None
         self.LIDAR_PATH = None
@@ -10,45 +12,66 @@ class DataSave:
         self.CARLA_LABEL_PATH = None
         self.IMAGE_PATH = None
         self.CALIBRATION_PATH = None
+        self.IMAGE_EXT = self._get_image_ext(args)
+        self.kitti_only = True if args and args.kitti_only else False
+        
         self._generate_path(self.cfg["SAVE_CONFIG"]["ROOT_PATH"])
         self.captured_frame_no = self._current_captured_frame_num()
 
+    def _get_image_ext(self, args = None):
+        image_filter = ['jpg','jpeg','png']
 
-    def _generate_path(self,root_path):
-        """ 生成数据存储的路径"""
+        if args :
+            try:
+                if str(args.image_type).lower() in image_filter:
+                    return str(args.image_type).lower()
+                else:
+                    raise Exception
+            except:
+                return "png"
+        return "png"
+
+    def _generate_path(self, root_path):
+        """Save path of generated data"""
         PHASE = "training"
         self.OUTPUT_FOLDER = os.path.join(root_path, PHASE)
-        folders = ['calib', 'image', 'kitti_label', 'carla_label', 'velodyne']
+        folders = ["calib", "data", "labels", "carla_label", "velodyne"]
+        if self.kitti_only:
+            folders = ["data", "labels"]
 
         for folder in folders:
             directory = os.path.join(self.OUTPUT_FOLDER, folder)
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
-        self.LIDAR_PATH = os.path.join(self.OUTPUT_FOLDER, 'velodyne/{0:06}.bin')
-        self.KITTI_LABEL_PATH = os.path.join(self.OUTPUT_FOLDER, 'kitti_label/{0:06}.txt')
-        self.CARLA_LABEL_PATH = os.path.join(self.OUTPUT_FOLDER, 'carla_label/{0:06}.txt')
-        self.IMAGE_PATH = os.path.join(self.OUTPUT_FOLDER, 'image/{0:06}.png')
-        self.CALIBRATION_PATH = os.path.join(self.OUTPUT_FOLDER, 'calib/{0:06}.txt')
-
+        self.LIDAR_PATH = os.path.join(self.OUTPUT_FOLDER, "velodyne/{0:06}.bin")
+        self.KITTI_LABEL_PATH = os.path.join(self.OUTPUT_FOLDER, "labels/{0:06}.txt")
+        self.CARLA_LABEL_PATH = os.path.join(
+            self.OUTPUT_FOLDER, "carla_label/{0:06}.txt"
+        )
+        self.IMAGE_PATH = os.path.join(self.OUTPUT_FOLDER, "data/{0:06}."+self.IMAGE_EXT)
+        self.CALIBRATION_PATH = os.path.join(self.OUTPUT_FOLDER, "calib/{0:06}.txt")
 
     def _current_captured_frame_num(self):
         """获取文件夹中存在的数据量"""
-        label_path = os.path.join(self.OUTPUT_FOLDER, 'kitti_label/')
+        label_path = os.path.join(self.OUTPUT_FOLDER, "labels/")
         num_existing_data_files = len(
-            [name for name in os.listdir(label_path) if name.endswith('.txt')])
-        print("当前存在{}个数据".format(num_existing_data_files))
+            [name for name in os.listdir(label_path) if name.endswith(".txt")]
+        )
+        print("Currently there are {} data exist.".format(num_existing_data_files))
         if num_existing_data_files == 0:
             return 0
         answer = input(
             "There already exists a dataset in {}. Would you like to (O)verwrite or (A)ppend the dataset? (O/A)".format(
-                self.OUTPUT_FOLDER))
+                self.OUTPUT_FOLDER
+            )
+        )
         if answer.upper() == "O":
-            logging.info(
-                "Resetting frame number to 0 and overwriting existing")
+            # logging.info(
+            #    "Resetting frame number to 0 and overwriting existing")
             return 0
-        logging.info("Continuing recording data on frame number {}".format(
-            num_existing_data_files))
+        # logging.info("Continuing recording data on frame number {}".format(
+        #    num_existing_data_files))
         return num_existing_data_files
 
     def save_training_files(self, data):
@@ -61,13 +84,21 @@ class DataSave:
 
         for agent, dt in data["agents_data"].items():
 
-            camera_transform= config_to_trans(self.cfg["SENSOR_CONFIG"]["RGB"]["TRANSFORM"])
-            lidar_transform = config_to_trans(self.cfg["SENSOR_CONFIG"]["LIDAR"]["TRANSFORM"])
+            camera_transform = config_to_trans(
+                self.cfg["SENSOR_CONFIG"]["RGB"]["TRANSFORM"]
+            )
+            lidar_transform = config_to_trans(
+                self.cfg["SENSOR_CONFIG"]["LIDAR"]["TRANSFORM"]
+            )
 
             save_ref_files(self.OUTPUT_FOLDER, self.captured_frame_no)
             save_image_data(img_fname, dt["sensor_data"][0])
             save_label_data(kitti_label_fname, dt["kitti_datapoints"])
-            save_label_data(carla_label_fname, dt['carla_datapoints'])
-            save_calibration_matrices([camera_transform, lidar_transform], calib_filename, dt["intrinsic"])
+            if self.kitti_only:
+                continue
+            save_label_data(carla_label_fname, dt["carla_datapoints"])
+            save_calibration_matrices(
+                [camera_transform, lidar_transform], calib_filename, dt["intrinsic"]
+            )
             save_lidar_data(lidar_fname, dt["sensor_data"][2])
         self.captured_frame_no += 1

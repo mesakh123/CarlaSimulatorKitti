@@ -1,0 +1,10 @@
+**/__pycache__/
+dataset
+test
+data
+
+.vscode
+.DS_Store
+*.egg
+*.whl
+models/
