@@ -46,6 +46,7 @@ label：
 
 **label type**
 
+
 label 标定的目标主要分为两类，第一类是我们自己生成的 actors(Car 和 Pedestrian)；第二类是地图中存在的环境目标(None，Buildings，Fences，Other，Pedestrians，Poles，RoadLines，Roads，Sidewalks，TrafficSigns，Vegetation，Vehicles，Walls，Sky，Ground，Bridge，RailTrack，GuardRail，TrafficLight，Static，Dynamic，Water，Terrain)
 
 **Usage**
@@ -70,7 +71,6 @@ Collecting data and show Pygame
 python3 inspector.py --loop
 ```
 
-
 To enable predict on local model (put model on models/yolox_s.onnx)
 
 ```
@@ -85,7 +85,9 @@ python3 inspector.py --loop --predict
 To enable predict (remote API, i.e 'http://<model_host>:<model_port>/predict')
 
 ```
+
 python3 inference.py  --loop  --predict --model-host=0.0.0.0 --model-port=7777
+
 ```
 
 SynchronyModel.py，场景类，负责建立 client，设置 server，生成 actors，驱动 server 计算并获取数据
