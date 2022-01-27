@@ -34,18 +34,24 @@ filter_list_area = {
 
 
 def obj_type(obj):
+    allowed = ["poles","fences"]
+    string = ""
     if isinstance(obj, carla.EnvironmentObject):
-        return obj.type
+        string = str(obj.type)
     else:
         if obj.type_id.find("walker") != -1:
-            return "Pedestrian"
+            string =  "Pedestrian"
         if obj.type_id.find("vehicle") != -1:
-            return "Vehicles"
+            string =  "Vehicles"
         if obj.type_id.find("traffic_light") != -1:
-            return "TrafficLight"
+            string =  "TrafficLight"
         if obj.type_id.find("speed_limit") != -1:
-            return "TrafficSigns"
-        return "None"
+            string =  "TrafficSigns"
+        string =  "None"
+    if string[-1] == 's' and string.lower() not in allowed:
+        string = string[:-1]
+    return string
+
 
 
 def get_relative_rotation_y(agent_rotation, obj_rotation):
