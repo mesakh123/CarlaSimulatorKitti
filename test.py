@@ -611,7 +611,7 @@ def vertices_from_extension(ext):
 
 def transforms_from_agent(agent):
     """Returns the KITTI object type and transforms, locations and extension of the given agent"""
-    if agent.type_id.find("walker") is not -1:
+    if agent.type_id.find("walker") != -1:
         obj_type = "Pedestrian"
         agent_transform = agent.get_transform()
         bbox_transform = carla.Transform(
@@ -619,7 +619,7 @@ def transforms_from_agent(agent):
         )
         ext = agent.bounding_box.extent
         location = agent.get_transform().location
-    elif agent.type_id.find("vehicle") is not -1:
+    elif agent.type_id.find("vehicle") != -1:
         obj_type = "Car"
         agent_transform = agent.get_transform()
         bbox_transform = carla.Transform(

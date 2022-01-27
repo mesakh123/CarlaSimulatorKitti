@@ -43,7 +43,8 @@ def obj_type(obj):
             return "Vehicles"
         if obj.type_id.find("traffic_light") != -1:
             return "TrafficLight"
-        print("obj.type_id ", obj.type_id)
+        if obj.type_id.find("speed_limit") != -1:
+            return "TrafficSigns"
         return "None"
 
 
@@ -339,7 +340,6 @@ def legal_bbox(bbox, obj_tp):
 
     min_area = 40
     area = (bbox[2]-bbox[0]) * (bbox[3]-bbox[1])
-    print("{} {}".format(obj_tp,area))
 
     if obj_tp in filter_list.keys():
         min_area = filter_list[obj_tp]    
@@ -411,10 +411,8 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
     else 0
     
     obj_tp = obj_type(obj)
-    if isinstance(obj_tp,str) and obj_tp == "TrafficLight":
+    if isinstance(obj_tp,str) and (obj_tp == "TrafficLight") :
             object_type = 2
-    elif str(obj_tp) == "RoadLines":
-            object_type = 3
 
     obj_transform = (
         obj.transform
