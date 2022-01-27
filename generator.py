@@ -4,8 +4,21 @@ from config import cfg_from_yaml_file
 from carlautils.data_utils import objects_filter
 import argparse
 import time
+import threading
+from multiprocessing.pool import ThreadPool
+step = 0
+STEP = 10
+model = None
+dtsave = None
+
+th_lock = threading.Lock()
+
+def save_data_new(dtsave, data):
+    with th_lock:
+        dtsave.save_training_files(data)
 
 def main(args):
+    global step, STEP, model, dtsave
     cfg = cfg_from_yaml_file("configs.yaml")
     model = SynchronyModel(cfg,args)
     dtsave = DataSave(cfg, args.kitti_only)
@@ -13,7 +26,8 @@ def main(args):
 
     time_limit = int(args.time_limit)*60 \
         if args and args.time_limit else None
-
+    
+    pool = ThreadPool(processes=10)
     try:
         model.set_synchrony()
         model.spawn_actors()
@@ -26,20 +40,20 @@ def main(args):
         print("Time limit ",time_limit)
         while True:
             #Set time limit
-            if time_limit and \
-                (int(time.time() - start) == \
-                    time_limit):
+            if time_limit and (int(time.time() - start) == time_limit):
                 break
-
-            if step % STEP == 0:
+            if step%STEP ==0 :
                 data = model.tick()
                 data = objects_filter(data)
-                dtsave.save_training_files(data)
-                print(step / STEP)
+                pool.apply_async(save_data_new, args=(dtsave, data))
+                
+                print(step / STEP, (int(time.time() - start) ))
             else:
                 model.world.tick()
             step += 1
     finally:
+        pool.close()
+        pool.join()
         model.setting_recover()
 
 

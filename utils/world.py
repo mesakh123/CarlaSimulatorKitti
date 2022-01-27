@@ -13,12 +13,21 @@ from .camera_manager import CameraManager
 from .global_functions import *
 import random
 from .global_functions import *
+from utils.custom_classes import *
+
+
+classes = {
+    "kitti": KITTI_CLASSES,
+    "custom": CUSTOM_CLASSES,
+    "coco": COCO_CLASSES,
+    "carla": CARLA_CLASSES,
+}
 
 
 class World(object):
     """Class representing the surrounding environment"""
 
-    def __init__(self, carla_world, hud, args, remote_player: None, classes: None):
+    def __init__(self, carla_world, hud, args, remote_player: None):
         """Constructor method"""
         self._args = args
         self.world = carla_world
@@ -40,7 +49,8 @@ class World(object):
         self._weather_presets = find_weather_presets()
         self._weather_index = 0
         self._actor_filter = args.filter
-        self.classes = classes
+        self.classes = classes[args.classes] if \
+            args.classes in classes else classes["kitti"]
 
         self.restart(args, remote_player)
         self.world.on_tick(hud.on_world_tick)

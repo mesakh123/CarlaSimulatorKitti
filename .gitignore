@@ -5,3 +5,5 @@ data
 
 .vscode
 .DS_Store
+*.egg
+*.whl

@@ -2,7 +2,7 @@ from DataSave import DataSave
 from carlautils.SynchronyModel import SynchronyModel
 from config import cfg_from_yaml_file
 from carlautils.data_utils import objects_filter
-
+from utils.custom_classes import *
 
 
 import logging
@@ -37,33 +37,12 @@ from utils.world import World
 import random
 
 
-import threading
-import time
 
-save = False
-model = None
-dtsave = None
-step = 0
-STEP = 0
-
-def save_data():
-    global save, model, dtsave, step, STEP
-    while True:
-        if step % STEP == 0:
-            time.sleep(1)
-            with threading.Lock():
-                data = model.tick()
-                data = objects_filter(data)
-                dtsave.save_training_files(data)
-                save = False
-                print("Step {} saved".format(step/STEP))
 
 
 def main(args):
-    global save, model, dtsave, tasks, step, STEP
     cfg = cfg_from_yaml_file("configs.yaml")
     model = SynchronyModel(cfg, args)
-    dtsave = DataSave(cfg, args.kitti_only)
 
     pygame.init()
     pygame.font.init()
@@ -72,7 +51,6 @@ def main(args):
     args.behaviour = "Basic"
 
     step = 0
-    STEP = cfg["SAVE_CONFIG"]["STEP"]
     image_width = cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_x"]
     image_height = cfg["SENSOR_CONFIG"]["RGB"]["ATTRIBUTE"]["image_size_y"]
 
@@ -91,6 +69,7 @@ def main(args):
 
         hud = HUD(image_width, image_height)
 
+       
         world = World(model.world, hud, args, model.player)
 
         controller = KeyboardControl(world)
@@ -104,9 +83,6 @@ def main(args):
         agent.set_destination(destination)
 
         clock = pygame.time.Clock()
-        th = threading.Thread(target=save_data, args=())
-        th.setDaemon(True)
-        th.start()
 
         while True:
             clock.tick()
@@ -144,8 +120,7 @@ def main(args):
                 world.destroy()
             except:
                 pass
-
-        th.join()
+        
         pygame.quit()
 
 
@@ -237,13 +212,6 @@ if __name__ == "__main__":
         default="normal",
     )
     argparser.add_argument(
-        "-s",
-        "--seed",
-        help="Set seed for repeating executions (default: None)",
-        default=None,
-        type=int,
-    )
-    argparser.add_argument(
         "--conf",
         help="Set confidence of bbox (default: 0.6)",
         default=0.6,
@@ -257,6 +225,33 @@ if __name__ == "__main__":
         choices=["carla", "kitti", "coco", "custom"],
         help="Choose one of the classes list (default: kitti) ",
         default="carla",
+    )
+    argparser.add_argument(
+        "--vehicle-num",
+        default=50,
+        type=int,
+        help="Number of vehicle in the world",
+    )    
+    argparser.add_argument(
+        "--time-limit",
+        default=0,
+        type=int,
+        help="Set collect runtime timeout in minute (default : 0 (no timeout))",
+    )
+    argparser.add_argument(
+        "--walker-num",
+        default=20,
+        type=int,
+        help="Number of vehicle in the world",
+    )
+    argparser.add_argument(
+        "--town",
+        default="Town01",
+        type=str,
+        help="Selecting town, (default : Town01)",
+        choices=['Town01','Town01_Opt', \
+        'Town02','Town02_Opt','Town03','Town03_Opt','Town04','Town04_Opt',\
+        'Town05','Town05_Opt','Town10HD','Town10HD_Opt']
     )
     args = argparser.parse_args()
 
