@@ -25,7 +25,12 @@ MAX_OUT_VERTICES_FOR_RENDER = cfg["FILTER_CONFIG"]["MAX_OUT_VERTICES_FOR_RENDER"
 WINDOW_WIDTH = cfg["SENSOR_CONFIG"]["DEPTH_RGB"]["ATTRIBUTE"]["image_size_x"]
 WINDOW_HEIGHT = cfg["SENSOR_CONFIG"]["DEPTH_RGB"]["ATTRIBUTE"]["image_size_y"]
 
-KITTI_CLASSES = [""]
+filter_list = {
+    "TrafficLight":70
+}
+filter_list_area = {
+    "RoadLines" : WINDOW_HEIGHT * WINDOW_WIDTH / 5
+}
 
 
 def obj_type(obj):
@@ -38,6 +43,7 @@ def obj_type(obj):
             return "Vehicles"
         if obj.type_id.find("traffic_light") != -1:
             return "TrafficLight"
+        print("obj.type_id ", obj.type_id)
         return "None"
 
 
@@ -57,7 +63,17 @@ def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, ob
         bbox = transform_points(obj_transform, bbox)
 
     else:
-        bbox = transform_points(bbox_transform, bbox)
+        if obj_tp != 3:
+            bbox = transform_points(bbox_transform, bbox)
+        else:
+            bbox = vertices_from_extension(obj_bbox.extent)
+            box_location = carla.Location(obj_bbox.location.x-obj_transform.location.x,
+                                      obj_bbox.location.y-obj_transform.location.y,
+                                      obj_bbox.location.z-obj_transform.location.z)
+            box_rotation = obj_bbox.rotation
+            bbox_transform = carla.Transform(box_location, box_rotation)
+            bbox = transform_points(bbox_transform, bbox)
+            bbox = transform_points(obj_transform, bbox)
 
     vertices_pos2d = vertices_to_2d_coords(bbox, intrinsic_mat, extrinsic_mat)
     return vertices_pos2d
@@ -323,14 +339,18 @@ def legal_bbox(bbox, obj_tp):
 
     min_area = 40
     area = (bbox[2]-bbox[0]) * (bbox[3]-bbox[1])
-    filter_list = {
-        "TrafficLight":70
-    }
+    print("{} {}".format(obj_tp,area))
 
     if obj_tp in filter_list.keys():
         min_area = filter_list[obj_tp]    
 
-    return True if area > min_area else False
+    is_min_area =  True if area > min_area else False
+
+    is_max_area = True
+    if obj_tp in filter_list_area.keys():
+        is_max_area = False if area >= filter_list_area[obj_tp] else True
+
+    return is_min_area and is_max_area
 
 
 
@@ -393,7 +413,7 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
     obj_tp = obj_type(obj)
     if isinstance(obj_tp,str) and obj_tp == "TrafficLight":
             object_type = 2
-    if str(obj_tp) == "TrafficSign":
+    elif str(obj_tp) == "RoadLines":
             object_type = 3
 
     obj_transform = (
