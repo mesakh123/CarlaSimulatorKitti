@@ -69,14 +69,8 @@ def main(args):
 
         hud = HUD(image_width, image_height)
 
-        classes = {
-            "kitti": KITTI_CLASSES,
-            "custom": CUSTOM_CLASSES,
-            "coco": COCO_CLASSES,
-        }
-        cls = classes[args.classes] if args.classes in classes else classes["kitti"]
-
-        world = World(model.world, hud, args, model.player, cls)
+       
+        world = World(model.world, hud, args, model.player)
 
         controller = KeyboardControl(world)
         if args.agent == "Basic":
@@ -228,9 +222,9 @@ if __name__ == "__main__":
         "-c",
         "--classes",
         type=str,
-        choices=["kitti", "coco", "custom"],
+        choices=["carla", "kitti", "coco", "custom"],
         help="Choose one of the classes list (default: kitti) ",
-        default="kitti",
+        default="carla",
     )
     argparser.add_argument(
         "--vehicle-num",
