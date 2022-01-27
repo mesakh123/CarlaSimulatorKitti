@@ -52,28 +52,40 @@ label 标定的目标主要分为两类，第一类是我们自己生成的 acto
 
 Carla 版本：carla 0.9.12
 
-Only collecting Data
-
-```
-python3 inspector.py
-```
-
-Collecting data and show Pygame
+Collecting Data
 
 ```
 python3 generator.py
 ```
 
+Only show pygame
+
+```
+python3 inference.py --loop
+```
+
+Collecting data and show Pygame
+
+```
+python3 inspector.py --loop
+```
+
+
 To enable predict on local model (put model on models/yolox_s.onnx)
 
 ```
-python3 generator.py --predict
+python3 inference.py --loop --predict
+
+or 
+
+python3 inspector.py --loop --predict
+
 ```
 
 To enable predict (remote API, i.e 'http://<model_host>:<model_port>/predict')
 
 ```
-python3 generator.py --predict --model-host=0.0.0.0 --model-port=7777
+python3 inference.py  --loop  --predict --model-host=0.0.0.0 --model-port=7777
 ```
 
 SynchronyModel.py，场景类，负责建立 client，设置 server，生成 actors，驱动 server 计算并获取数据
@@ -95,6 +107,6 @@ visual_utils，可视化工具函数
 - [x] Add Pygame
 - [x] Enable to write file while running Pygame
 - [x] Add YOLOX model option , local model or remote model
+- [x] Improve writing file performance
 - [ ] Enable manual control
-- [ ] Improve writing file performance
 - [ ] Others...
