@@ -42,7 +42,7 @@ Source Code : https://github.com/mmmmaomao/DataGenerator
 **label type**
 Two types of labels:
  1. Actors : Car, Pedestrian
- 2. Environment : None，Buildings，Fences，Other，Pedestrians，Poles，RoadLines，Roads，Sidewalks，TrafficSigns，Vegetation，Vehicles，Walls，Sky，Ground，Bridge，RailTrack，GuardRail，TrafficLight，Static，Dynamic，Water，Terrain
+ 2. Environment : None，Buildings，Fences，Other，Pedestrians，Poles，RoadLine，Roads，Sidewalks，TrafficSigns，Vegetation，Vehicles，Walls，Sky，Ground，Bridge，RailTrack，GuardRail，TrafficLight，Static，Dynamic，Water，Terrain
 
 **Usage**
 

@@ -29,7 +29,7 @@ filter_list = {
     "TrafficLight":70
 }
 filter_list_area = {
-    "RoadLines" : WINDOW_HEIGHT * WINDOW_WIDTH / 5
+    "RoadLine" : WINDOW_HEIGHT * WINDOW_WIDTH / 4
 }
 
 

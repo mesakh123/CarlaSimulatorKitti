@@ -31,7 +31,7 @@ class KittiLabel(_baseLabel):
         3: "Other",
         4: "Pedestrian",
         5: "Poles",
-        6: "RoadLines",
+        6: "RoadLine",
         7: "Roads",
         8: "Sidewalks",
         9: "TrafficSigns",
