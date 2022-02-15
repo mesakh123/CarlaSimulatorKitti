@@ -3,7 +3,7 @@ CUSTOM_CLASSES = (
     "Car",
     "Dynamic",
     "Fences",
-    "NONE",
+    "None",
     "Other",
     "Pedestrian",
     "Poles",
