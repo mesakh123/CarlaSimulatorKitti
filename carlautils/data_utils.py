@@ -1,5 +1,6 @@
 import sys
-sys.path.append("..") # Adds higher directory to python modules path.
+
+sys.path.append("..")  # Adds higher directory to python modules path.
 import numpy as np
 from numpy.linalg import inv
 
@@ -25,33 +26,30 @@ MAX_OUT_VERTICES_FOR_RENDER = cfg["FILTER_CONFIG"]["MAX_OUT_VERTICES_FOR_RENDER"
 WINDOW_WIDTH = cfg["SENSOR_CONFIG"]["DEPTH_RGB"]["ATTRIBUTE"]["image_size_x"]
 WINDOW_HEIGHT = cfg["SENSOR_CONFIG"]["DEPTH_RGB"]["ATTRIBUTE"]["image_size_y"]
 
-filter_list = {
-    "TrafficLight":70
-}
-filter_list_area = {
-    "RoadLine" : WINDOW_HEIGHT * WINDOW_WIDTH / 4
-}
+filter_list = {"TrafficLight": 70}
+filter_list_area = {"RoadLine": WINDOW_HEIGHT * WINDOW_WIDTH / 4}
 
 
 def obj_type(obj):
-    allowed = ["poles","fences"]
+    allowed = ["poles", "fences"]
     string = ""
     if isinstance(obj, carla.EnvironmentObject):
         string = str(obj.type)
     else:
         if obj.type_id.find("walker") != -1:
-            string =  "Pedestrian"
+            string = "Pedestrian"
         if obj.type_id.find("vehicle") != -1:
-            string =  "Vehicles"
+            string = "Vehicles"
         if obj.type_id.find("traffic_light") != -1:
-            string =  "TrafficLight"
+            string = "TrafficLight"
         if obj.type_id.find("speed_limit") != -1:
-            string =  "TrafficSigns"
-        string =  "None"
-    if string[-1] == 's' and string.lower() not in allowed:
+            string = "TrafficSigns"
+        string = "None"
+    if string[-1] == "s" and string.lower() not in allowed:
         string = string[:-1]
+    if string.lower() == "none":
+        string = "None"
     return string
-
 
 
 def get_relative_rotation_y(agent_rotation, obj_rotation):
@@ -61,11 +59,12 @@ def get_relative_rotation_y(agent_rotation, obj_rotation):
     rot_car = obj_rotation.yaw
     return degrees_to_radians(rot_agent - rot_car)
 
+
 def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp):
     bbox = vertices_from_extension2(obj_bbox.extent)
     bbox_transform = carla.Transform(obj_bbox.location, obj_transform.rotation)
 
-    if obj_tp == 1:       
+    if obj_tp == 1:
         bbox = transform_points(bbox_transform, bbox)
         bbox = transform_points(obj_transform, bbox)
 
@@ -74,9 +73,11 @@ def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, ob
             bbox = transform_points(bbox_transform, bbox)
         else:
             bbox = vertices_from_extension(obj_bbox.extent)
-            box_location = carla.Location(obj_bbox.location.x-obj_transform.location.x,
-                                      obj_bbox.location.y-obj_transform.location.y,
-                                      obj_bbox.location.z-obj_transform.location.z)
+            box_location = carla.Location(
+                obj_bbox.location.x - obj_transform.location.x,
+                obj_bbox.location.y - obj_transform.location.y,
+                obj_bbox.location.z - obj_transform.location.z,
+            )
             box_rotation = obj_bbox.rotation
             bbox_transform = carla.Transform(box_location, box_rotation)
             bbox = transform_points(bbox_transform, bbox)
@@ -86,16 +87,19 @@ def bbox_2d_from_agent(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, ob
     return vertices_pos2d
 
 
-
-def bbox_2d_from_agent_ori(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp):
+def bbox_2d_from_agent_ori(
+    intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform, obj_tp
+):
     bbox = vertices_from_extension(obj_bbox.extent)
     if obj_tp == 1:
         bbox_transform = carla.Transform(obj_bbox.location, obj_bbox.rotation)
         bbox = transform_points(bbox_transform, bbox)
     else:
-        box_location = carla.Location(obj_bbox.location.x-obj_transform.location.x,
-                                      obj_bbox.location.y-obj_transform.location.y,
-                                      obj_bbox.location.z-obj_transform.location.z)
+        box_location = carla.Location(
+            obj_bbox.location.x - obj_transform.location.x,
+            obj_bbox.location.y - obj_transform.location.y,
+            obj_bbox.location.z - obj_transform.location.z,
+        )
         box_rotation = obj_bbox.rotation
         bbox_transform = carla.Transform(box_location, box_rotation)
         bbox = transform_points(bbox_transform, bbox)
@@ -104,8 +108,6 @@ def bbox_2d_from_agent_ori(intrinsic_mat, extrinsic_mat, obj_bbox, obj_transform
     # 将世界坐标系下的bbox八个点转换到二维图片中
     vertices_pos2d = vertices_to_2d_coords(bbox, intrinsic_mat, extrinsic_mat)
     return vertices_pos2d
-
-
 
 
 def vertices_from_extension(ext):
@@ -123,16 +125,17 @@ def vertices_from_extension(ext):
         ]
     )
 
+
 def vertices_from_extension2(extent):
     cords = np.zeros((8, 3))
-    cords[0, :] = np.array([extent.x, extent.y, -extent.z]) # Top left front 
-    cords[1, :] = np.array([-extent.x, extent.y, -extent.z])# Top left back 
-    cords[2, :] = np.array([-extent.x, -extent.y, -extent.z])# Top right front 
-    cords[3, :] = np.array([extent.x, -extent.y, -extent.z])# Top right back 
-    cords[4, :] = np.array([extent.x, extent.y, extent.z])# Bottom left front 
-    cords[5, :] = np.array([-extent.x, extent.y, extent.z])# Bottom left back 
-    cords[6, :] = np.array([-extent.x, -extent.y, extent.z])# Bottom right front 
-    cords[7, :] = np.array([extent.x, -extent.y, extent.z])# Bottom right back 
+    cords[0, :] = np.array([extent.x, extent.y, -extent.z])  # Top left front
+    cords[1, :] = np.array([-extent.x, extent.y, -extent.z])  # Top left back
+    cords[2, :] = np.array([-extent.x, -extent.y, -extent.z])  # Top right front
+    cords[3, :] = np.array([extent.x, -extent.y, -extent.z])  # Top right back
+    cords[4, :] = np.array([extent.x, extent.y, extent.z])  # Bottom left front
+    cords[5, :] = np.array([-extent.x, extent.y, extent.z])  # Bottom left back
+    cords[6, :] = np.array([-extent.x, -extent.y, extent.z])  # Bottom right front
+    cords[7, :] = np.array([extent.x, -extent.y, extent.z])  # Bottom right back
     return cords
 
 
@@ -145,9 +148,9 @@ def transform_points(transform, points):
 
 
 def vertices_to_2d_coords(bbox, intrinsic_mat, extrinsic_mat):
-    """ 
-    Accepts a bbox which is a list of 3d world coordinates and returns a list 
-    of the 2d pixel coordinates of each vertex. 
+    """
+    Accepts a bbox which is a list of 3d world coordinates and returns a list
+    of the 2d pixel coordinates of each vertex.
     This is represented as a tuple (y, x, d) where y and x are the 2d pixel coordinates
     while d is the depth. The depth can be used for filtering visible vertices.
     """
@@ -233,7 +236,7 @@ def midpoint_from_agent_location(location, extrinsic_mat):
     This is used since kitti treats this point as the location of the car
 
     """
-   
+
     midpoint_vector = np.array(
         [[location.x], [location.y], [location.z], [1.0]]  # [[X,  # Y,  # Z,  # 1.0]]
     )
@@ -295,7 +298,7 @@ def distance_between_locations(location1, location2):
 
 
 def calc_projected_2d_bbox(vertices_pos2d):
-    """ 
+    """
     Takes in all vertices in pixel projection and calculates min and max of all x and y coordinates.
     Returns left top, right bottom pixel coordinates for the 2d bounding box as a list of four values.
     Note that vertices_pos2d contains a list of (y_pos2d, x_pos2d) tuples, or None
@@ -321,7 +324,7 @@ def degrees_to_radians(degrees):
 
 
 def custom_calc_projected_2d_bbox(vertices_pos2d, depth_image, object_type=0):
-    """ 
+    """
     Takes in all vertices in pixel projection and calculates min and max of all x and y coordinates.
     Returns left top, right bottom pixel coordinates for the 2d bounding box as a list of four values.
     Note that vertices_pos2d contains a list of (y_pos2d, x_pos2d) tuples, or None
@@ -345,19 +348,18 @@ def custom_calc_projected_2d_bbox(vertices_pos2d, depth_image, object_type=0):
 def legal_bbox(bbox, obj_tp):
 
     min_area = 40
-    area = (bbox[2]-bbox[0]) * (bbox[3]-bbox[1])
+    area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
 
     if obj_tp in filter_list.keys():
-        min_area = filter_list[obj_tp]    
+        min_area = filter_list[obj_tp]
 
-    is_min_area =  True if area > min_area else False
+    is_min_area = True if area > min_area else False
 
     is_max_area = True
     if obj_tp in filter_list_area.keys():
         is_max_area = False if area >= filter_list_area[obj_tp] else True
 
     return is_min_area and is_max_area
-
 
 
 def objects_filter(data):
@@ -409,16 +411,12 @@ def objects_filter(data):
 
 
 def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
-    actor_type_list = [
-        carla.Walker,carla.Vehicle,carla.WalkerAIController
+    actor_type_list = [carla.Walker, carla.Vehicle, carla.WalkerAIController]
+    object_type = 1 if type(obj) in actor_type_list else 0
 
-    ]
-    object_type = 1 if type(obj) in actor_type_list \
-    else 0
-    
     obj_tp = obj_type(obj)
-    if isinstance(obj_tp,str) and (obj_tp == "TrafficLight") :
-            object_type = 2
+    if isinstance(obj_tp, str) and (obj_tp == "TrafficLight"):
+        object_type = 2
 
     obj_transform = (
         obj.transform
@@ -426,10 +424,9 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
         else obj.get_transform()
     )
 
-
     obj_bbox = obj.bounding_box
     vertices_pos2d = bbox_2d_from_agent(
-            intrinsic, extrinsic, obj_bbox, obj_transform, object_type
+        intrinsic, extrinsic, obj_bbox, obj_transform, object_type
     )
 
     depth_image = depth_to_array(depth_data)
@@ -441,18 +438,16 @@ def is_visible_by_bbox(agent, obj, rgb_image, depth_data, intrinsic, extrinsic):
         and num_vertices_outside_camera < MAX_OUT_VERTICES_FOR_RENDER
     ):
         midpoint = midpoint_from_agent_location(obj_transform.location, extrinsic)
-        #midpoint[:3] = np.identity(3) * midpoint[:3]
+        # midpoint[:3] = np.identity(3) * midpoint[:3]
 
         # bbox_2d = calc_projected_2d_bbox(vertices_pos2d)
-        
-        
+
         bbox_2d = custom_calc_projected_2d_bbox(
             vertices_pos2d, depth_image, object_type
         )
 
         if not legal_bbox(bbox_2d, str(obj_tp)):
             return None, None
-
 
         rotation_y = (
             get_relative_rotation_y(
