@@ -11,6 +11,7 @@ class DataSave:
         self.KITTI_LABEL_PATH = None
         self.IMAGE_PATH = None
         self.CALIBRATION_PATH = None
+        self.RADAR_PATH = None
         self.IMAGE_EXT = self._get_image_ext(args)
         self.kitti_only = True if args and args.kitti_only else False
         
@@ -34,7 +35,7 @@ class DataSave:
         """Save path of generated data"""
         PHASE = "training"
         self.OUTPUT_FOLDER = os.path.join(root_path, PHASE)
-        folders = ["calib", "data", "labels", "velodyne"]
+        folders = ["calib", "data", "labels", "velodyne","radar"]
         if self.kitti_only:
             folders = ["data", "labels"]
 
@@ -47,6 +48,7 @@ class DataSave:
         self.KITTI_LABEL_PATH = os.path.join(self.OUTPUT_FOLDER, "labels/{0:06}.txt")
         self.IMAGE_PATH = os.path.join(self.OUTPUT_FOLDER, "data/{0:06}."+self.IMAGE_EXT)
         self.CALIBRATION_PATH = os.path.join(self.OUTPUT_FOLDER, "calib/{0:06}.txt")
+        self.RADAR_PATH = os.path.join(self.OUTPUT_FOLDER, "radar/{0:06}.txt")
 
     def _current_captured_frame_num(self):
         """获取文件夹中存在的数据量"""
@@ -76,7 +78,8 @@ class DataSave:
         kitti_label_fname = self.KITTI_LABEL_PATH.format(self.captured_frame_no)
         img_fname = self.IMAGE_PATH.format(self.captured_frame_no)
         calib_filename = self.CALIBRATION_PATH.format(self.captured_frame_no)
-
+        radar_file_name = self.RADAR_PATH.format(self.captured_frame_no)
+        
         for agent, dt in data["agents_data"].items():
 
             camera_transform = config_to_trans(
@@ -95,4 +98,5 @@ class DataSave:
                 [camera_transform, lidar_transform], calib_filename, dt["intrinsic"]
             )
             save_lidar_data(lidar_fname, dt["sensor_data"][2])
+            save_radar_data(radar_file_name,dt["radar_datapoints"])
         self.captured_frame_no += 1

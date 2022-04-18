@@ -172,3 +172,20 @@ def save_rgb_image(filename, image):
     im.save(buffer, format="png")
     save_img_async(filename, buffer.getbuffer())
     # im.save(filename)
+    
+
+
+def save_radar_data(filename, pointclouds):
+    """Appends the id of the given record to the files"""
+    path = os.path.join(filename)
+    f = open(path, 'a')
+    print("pointclouds ",pointclouds)
+    print("pointclouds ",pointclouds.raw_data)
+    points = np.frombuffer(pointclouds.raw_data, dtype=np.dtype('f4'))
+    points = np.reshape(points, (len(pointclouds), 4))
+    if points.size != 0:
+        stuff = str(str(points).replace('[', '')).replace(']', '')
+        f.write(f"{stuff}")
+    
+    f.close()
+    # logging.info("Wrote reference files to %s", path)

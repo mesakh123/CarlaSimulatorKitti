@@ -29,6 +29,11 @@ SENSOR_CONFIG:
         channels: 64,
       }
 
+  RADAR:
+    TRANSFORM: { location: [0, 0, 1.6], rotation: [0, 0, 0] }
+    BLUEPRINT: sensor.other.radar
+    ATTRIBUTE: { horizontal_fov: 35, vertical_fov: 20 }
+
 FILTER_CONFIG:
   PRELIMINARY_FILTER_DISTANCE: 50
   MAX_RENDER_DEPTH_IN_METERS: 50
