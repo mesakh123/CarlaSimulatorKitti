@@ -9,7 +9,6 @@ class DataSave:
         self.OUTPUT_FOLDER = None
         self.LIDAR_PATH = None
         self.KITTI_LABEL_PATH = None
-        self.CARLA_LABEL_PATH = None
         self.IMAGE_PATH = None
         self.CALIBRATION_PATH = None
         self.IMAGE_EXT = self._get_image_ext(args)
@@ -35,7 +34,7 @@ class DataSave:
         """Save path of generated data"""
         PHASE = "training"
         self.OUTPUT_FOLDER = os.path.join(root_path, PHASE)
-        folders = ["calib", "data", "labels", "carla_label", "velodyne"]
+        folders = ["calib", "data", "labels", "velodyne"]
         if self.kitti_only:
             folders = ["data", "labels"]
 
@@ -46,9 +45,6 @@ class DataSave:
 
         self.LIDAR_PATH = os.path.join(self.OUTPUT_FOLDER, "velodyne/{0:06}.bin")
         self.KITTI_LABEL_PATH = os.path.join(self.OUTPUT_FOLDER, "labels/{0:06}.txt")
-        self.CARLA_LABEL_PATH = os.path.join(
-            self.OUTPUT_FOLDER, "carla_label/{0:06}.txt"
-        )
         self.IMAGE_PATH = os.path.join(self.OUTPUT_FOLDER, "data/{0:06}."+self.IMAGE_EXT)
         self.CALIBRATION_PATH = os.path.join(self.OUTPUT_FOLDER, "calib/{0:06}.txt")
 
@@ -78,7 +74,6 @@ class DataSave:
 
         lidar_fname = self.LIDAR_PATH.format(self.captured_frame_no)
         kitti_label_fname = self.KITTI_LABEL_PATH.format(self.captured_frame_no)
-        carla_label_fname = self.CARLA_LABEL_PATH.format(self.captured_frame_no)
         img_fname = self.IMAGE_PATH.format(self.captured_frame_no)
         calib_filename = self.CALIBRATION_PATH.format(self.captured_frame_no)
 
@@ -96,7 +91,6 @@ class DataSave:
             save_label_data(kitti_label_fname, dt["kitti_datapoints"])
             if self.kitti_only:
                 continue
-            save_label_data(carla_label_fname, dt["carla_datapoints"])
             save_calibration_matrices(
                 [camera_transform, lidar_transform], calib_filename, dt["intrinsic"]
             )
