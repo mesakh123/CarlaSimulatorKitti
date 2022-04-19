@@ -56,7 +56,7 @@ def save_data():
                 data = objects_filter(data)
                 dtsave.save_training_files(data)
                 save = False
-                print("Step {} saved".format(step/STEP))
+                print("Step {} saved".format(int(step/STEP)))
 
 
 def main(args):
