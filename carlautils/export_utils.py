@@ -187,3 +187,39 @@ def save_radar_data(filename, pointclouds):
     
     f.close()
     # logging.info("Wrote reference files to %s", path)
+    
+
+def save_imu_data(filename, sensor_data):
+    path = os.path.join(filename)
+    f = open(path, 'a')
+    limits = (-99.9, 99.9)
+
+    accelerometer = (
+        max(limits[0], min(limits[1], sensor_data.accelerometer.x)),
+        max(limits[0], min(limits[1], sensor_data.accelerometer.y)),
+        max(limits[0], min(limits[1], sensor_data.accelerometer.z)))
+
+    s = "{} {} {}\n".format(accelerometer[0],accelerometer[1],accelerometer[2])
+    f.write(s)
+
+    gyroscope = (
+        max(limits[0], min(limits[1], math.degrees(sensor_data.gyroscope.x))),
+        max(limits[0], min(limits[1], math.degrees(sensor_data.gyroscope.y))),
+        max(limits[0], min(limits[1], math.degrees(sensor_data.gyroscope.z))))
+    
+    s = "{} {} {}\n".format(gyroscope[0],gyroscope[1],gyroscope[2])
+    f.write(s)
+    
+    s = f"{math.degrees(sensor_data.compass)}\n"
+    f.write(s)
+    
+    f.close()
+    
+def save_gnss_data(filename, sensor_data):
+    path = os.path.join(filename)
+    f = open(path, 'a')
+   
+    s = "{} {} {}\n".format(sensor_data.latitude, sensor_data.longitude, sensor_data.altitude)
+    f.write(s)
+    
+    f.close()

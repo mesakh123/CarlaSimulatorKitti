@@ -34,6 +34,16 @@ SENSOR_CONFIG:
     BLUEPRINT: sensor.other.radar
     ATTRIBUTE: { horizontal_fov: 35, vertical_fov: 20 }
 
+  IMU:
+    TRANSFORM: { location: [0, 0, 1.6], rotation: [0, 0, 0] }
+    BLUEPRINT: sensor.other.imu
+    ATTRIBUTE: {}
+
+  GNSS:
+    TRANSFORM: { location: [0, 0, 1.6], rotation: [0, 0, 0] }
+    BLUEPRINT: sensor.other.gnss
+    ATTRIBUTE: {}
+
 FILTER_CONFIG:
   PRELIMINARY_FILTER_DISTANCE: 50
   MAX_RENDER_DEPTH_IN_METERS: 50

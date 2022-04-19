@@ -383,6 +383,8 @@ def objects_filter(data):
         image = rgb_image.copy()
         depth_data = sensors_data[1]
         radar_datapoints = sensors_data[3]
+        imu_data = sensors_data[4]
+        gnss_data = sensors_data[5]
 
         data["agents_data"][agent]["visible_environment_objects"] = []
         for obj in environment_objects:
@@ -409,6 +411,8 @@ def objects_filter(data):
         data["agents_data"][agent]["kitti_datapoints"] = kitti_datapoints
         data["agents_data"][agent]["carla_datapoints"] = carla_datapoints
         data["agents_data"][agent]["radar_datapoints"] = radar_datapoints
+        data["agents_data"][agent]["imu_data"] = imu_data
+        data["agents_data"][agent]["gnss_data"] = gnss_data
     return data
 
 

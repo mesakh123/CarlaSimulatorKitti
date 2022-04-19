@@ -12,6 +12,8 @@ class DataSave:
         self.IMAGE_PATH = None
         self.CALIBRATION_PATH = None
         self.RADAR_PATH = None
+        self.IMU_PATH = None
+        self.GNSS_PATH = None
         self.IMAGE_EXT = self._get_image_ext(args)
         self.kitti_only = True if args and args.kitti_only else False
         
@@ -35,7 +37,7 @@ class DataSave:
         """Save path of generated data"""
         PHASE = "training"
         self.OUTPUT_FOLDER = os.path.join(root_path, PHASE)
-        folders = ["calib", "data", "labels", "velodyne","radar"]
+        folders = ["calib", "data", "labels", "velodyne","radar", "imu","gnss"]
         if self.kitti_only:
             folders = ["data", "labels"]
 
@@ -49,6 +51,8 @@ class DataSave:
         self.IMAGE_PATH = os.path.join(self.OUTPUT_FOLDER, "data/{0:06}."+self.IMAGE_EXT)
         self.CALIBRATION_PATH = os.path.join(self.OUTPUT_FOLDER, "calib/{0:06}.txt")
         self.RADAR_PATH = os.path.join(self.OUTPUT_FOLDER, "radar/{0:06}.txt")
+        self.IMU_PATH = os.path.join(self.OUTPUT_FOLDER, "imu/{0:06}.txt")
+        self.GNSS_PATH = os.path.join(self.OUTPUT_FOLDER, "gnss/{0:06}.txt")
 
     def _current_captured_frame_num(self):
         """获取文件夹中存在的数据量"""
@@ -79,6 +83,8 @@ class DataSave:
         img_fname = self.IMAGE_PATH.format(self.captured_frame_no)
         calib_filename = self.CALIBRATION_PATH.format(self.captured_frame_no)
         radar_file_name = self.RADAR_PATH.format(self.captured_frame_no)
+        imu_file_name = self.IMU_PATH.format(self.captured_frame_no)
+        gnss_file_name= self.GNSS_PATH.format(self.captured_frame_no)
         
         for agent, dt in data["agents_data"].items():
 
@@ -99,4 +105,6 @@ class DataSave:
             )
             save_lidar_data(lidar_fname, dt["sensor_data"][2])
             save_radar_data(radar_file_name,dt["radar_datapoints"])
+            save_imu_data(imu_file_name, dt['imu_data'])
+            save_gnss_data(gnss_file_name, dt['gnss_data'])
         self.captured_frame_no += 1
