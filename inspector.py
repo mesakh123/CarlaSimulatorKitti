@@ -53,7 +53,7 @@ def save_data():
             time.sleep(1)
             with threading.Lock():
                 data = model.tick()
-                data = objects_filter(data)
+                data = objects_filter(model.player, data)
                 dtsave.save_training_files(data)
                 save = False
                 print("Step {} saved".format(int(step/STEP)))

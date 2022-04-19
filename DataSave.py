@@ -14,6 +14,8 @@ class DataSave:
         self.RADAR_PATH = None
         self.IMU_PATH = None
         self.GNSS_PATH = None
+        self.VELO_PATH = None
+        
         self.IMAGE_EXT = self._get_image_ext(args)
         self.kitti_only = True if args and args.kitti_only else False
         
@@ -37,7 +39,7 @@ class DataSave:
         """Save path of generated data"""
         PHASE = "training"
         self.OUTPUT_FOLDER = os.path.join(root_path, PHASE)
-        folders = ["calib", "data", "labels", "velodyne","radar", "imu","gnss"]
+        folders = ["calib", "data", "labels", "velodyne","radar", "imu","gnss","velo"]
         if self.kitti_only:
             folders = ["data", "labels"]
 
@@ -53,7 +55,7 @@ class DataSave:
         self.RADAR_PATH = os.path.join(self.OUTPUT_FOLDER, "radar/{0:06}.txt")
         self.IMU_PATH = os.path.join(self.OUTPUT_FOLDER, "imu/{0:06}.txt")
         self.GNSS_PATH = os.path.join(self.OUTPUT_FOLDER, "gnss/{0:06}.txt")
-
+        self.VELO_PATH = os.path.join(self.OUTPUT_FOLDER,"velo/{0:06}.txt")
     def _current_captured_frame_num(self):
         """获取文件夹中存在的数据量"""
         label_path = os.path.join(self.OUTPUT_FOLDER, "labels/")
@@ -84,8 +86,8 @@ class DataSave:
         calib_filename = self.CALIBRATION_PATH.format(self.captured_frame_no)
         radar_file_name = self.RADAR_PATH.format(self.captured_frame_no)
         imu_file_name = self.IMU_PATH.format(self.captured_frame_no)
-        gnss_file_name= self.GNSS_PATH.format(self.captured_frame_no)
-        
+        gnss_file_name = self.GNSS_PATH.format(self.captured_frame_no)
+        velo_file_name = self.VELO_PATH.format(self.captured_frame_no)
         for agent, dt in data["agents_data"].items():
 
             camera_transform = config_to_trans(
@@ -107,4 +109,5 @@ class DataSave:
             save_radar_data(radar_file_name,dt["radar_datapoints"])
             save_imu_data(imu_file_name, dt['imu_data'])
             save_gnss_data(gnss_file_name, dt['gnss_data'])
+            save_velo_data(velo_file_name, dt['velo_data'])
         self.captured_frame_no += 1

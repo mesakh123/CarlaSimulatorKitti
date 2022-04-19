@@ -223,3 +223,14 @@ def save_gnss_data(filename, sensor_data):
     f.write(s)
     
     f.close()
+
+def save_velo_data(filename, sensor_data):
+    
+    path = os.path.join(filename)
+    print("sensor data ",sensor_data)
+    f = open(path, 'a')
+   
+    s = "{}\n".format(sensor_data)
+    f.write(s)
+    
+    f.close()

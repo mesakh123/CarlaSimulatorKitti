@@ -362,7 +362,7 @@ def legal_bbox(bbox, obj_tp):
     return is_min_area and is_max_area
 
 
-def objects_filter(data):
+def objects_filter(player, data):
     environment_objects = data["environment_objects"]
     agents_data = data["agents_data"]
     actors = data["actors"]
@@ -413,6 +413,14 @@ def objects_filter(data):
         data["agents_data"][agent]["radar_datapoints"] = radar_datapoints
         data["agents_data"][agent]["imu_data"] = imu_data
         data["agents_data"][agent]["gnss_data"] = gnss_data
+        
+        t = player.get_transform()
+        v = player.get_velocity()
+        c = player.get_control()
+        speed = 3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2)
+        
+        data["agents_data"][agent]["velo_data"] = str(speed)
+        
     return data
 
 

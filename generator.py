@@ -44,7 +44,7 @@ def main(args):
                 break
             if step%STEP ==0 :
                 data = model.tick()
-                data = objects_filter(data)
+                data = objects_filter(model.player, data)
                 pool.apply_async(save_data_new, args=(dtsave, data))
                 
                 print("Saved file : {}".format( int(step / STEP)))
