@@ -179,8 +179,6 @@ def save_radar_data(filename, pointclouds):
     """Appends the id of the given record to the files"""
     path = os.path.join(filename)
     f = open(path, 'a')
-    print("pointclouds ",pointclouds)
-    print("pointclouds ",pointclouds.raw_data)
     points = np.frombuffer(pointclouds.raw_data, dtype=np.dtype('f4'))
     points = np.reshape(points, (len(pointclouds), 4))
     if points.size != 0:

@@ -5,6 +5,7 @@ Pygame CARLA Simulator to produce KITTI 2D/3D object detection
 Source Code : https://github.com/mmmmaomao/DataGenerator
 
 **Folder Format**
+
 ```
 |-- dataset
     |-- training
@@ -19,6 +20,7 @@ Source Code : https://github.com/mmmmaomao/DataGenerator
 ```
 
 **KITTI label format**
+
 ```
  Values    Name      Description
 ----------------------------------------------------------------------------
@@ -41,8 +43,9 @@ Source Code : https://github.com/mmmmaomao/DataGenerator
 
 **label type**
 Two types of labels:
- 1. Actors : Car, Pedestrian
- 2. Environment : None，Buildings，Fences，Other，Pedestrians，Poles，RoadLine，Roads，Sidewalks，TrafficSigns，Vegetation，Vehicles，Walls，Sky，Ground，Bridge，RailTrack，GuardRail，TrafficLight，Static，Dynamic，Water，Terrain
+
+1.  Actors : Car, Pedestrian
+2.  Environment : None，Buildings，Fences，Other，Pedestrians，Poles，RoadLine，Roads，Sidewalks，TrafficSigns，Vegetation，Vehicles，Walls，Sky，Ground，Bridge，RailTrack，GuardRail，TrafficLight，Static，Dynamic，Water，Terrain
 
 **Usage**
 
@@ -71,7 +74,7 @@ To enable predict on local model (put model on models/yolox_s.onnx)
 ```
 python3 inference.py --loop --predict
 
-or 
+or
 
 python3 inspector.py --loop --predict
 
@@ -86,6 +89,7 @@ python3 inference.py  --loop  --predict --model-host=0.0.0.0 --model-port=7777
 ```
 
 **CarlaUtils**
+
 SynchronyModel.py，Build client，setup server，generate actors，Generate data from server
 
 data_utils.py， functions of coordinate transform、generate label
